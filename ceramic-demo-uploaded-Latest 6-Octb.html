@@ -1,0 +1,2808 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ceramic Production Line - Digital Twin Platform</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+            min-height: 100vh;
+            color: white;
+            overflow-x: auto;
+        }
+
+        .header {
+            padding: 20px;
+            background: rgba(0,0,0,0.3);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .header-left h1 {
+            font-size: 28px;
+            font-weight: 600;
+            background: linear-gradient(90deg, #00ff88, #00d4ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 5px;
+        }
+
+        .header-left p {
+            color: rgba(255,255,255,0.7);
+            font-size: 14px;
+        }
+
+        .header-right {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .language-switcher {
+            display: flex;
+            gap: 5px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 25px;
+            padding: 3px;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .lang-btn {
+            padding: 8px 16px;
+            background: transparent;
+            border: none;
+            color: rgba(255,255,255,0.7);
+            cursor: pointer;
+            border-radius: 20px;
+            transition: all 0.3s ease;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .lang-btn.active {
+            background: linear-gradient(145deg, rgba(0,255,136,0.3), rgba(0,255,136,0.2));
+            color: white;
+            box-shadow: 0 2px 10px rgba(0,255,136,0.3);
+        }
+
+        .lang-btn:hover:not(.active) {
+            color: white;
+            background: rgba(255,255,255,0.1);
+        }
+
+        .tile-passport-floating {
+            position: fixed;
+            top: 100px;
+            left: 20px;
+            width: 320px;
+            background: rgba(0,0,0,0.9);
+            backdrop-filter: blur(20px);
+            border: 2px solid rgba(0,255,136,0.5);
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,255,136,0.3);
+            z-index: 200;
+            transition: all 0.3s ease;
+        }
+
+        .tile-passport-floating.minimized {
+            width: auto;
+            min-width: 200px;
+        }
+
+        .tile-passport-floating.minimized .tile-passport-body {
+            display: none;
+        }
+
+        .tile-passport-floating.dragging {
+            opacity: 0.9;
+            transform: scale(1.02);
+            box-shadow: 0 15px 50px rgba(0,255,136,0.5);
+        }
+
+        .tile-passport-header {
+            padding: 15px;
+            background: rgba(0,255,136,0.1);
+            border-bottom: 1px solid rgba(0,255,136,0.3);
+            border-radius: 15px 15px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: move;
+            user-select: none;
+        }
+
+        .tile-passport-title {
+            color: #00ff88;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .tile-passport-controls {
+            display: flex;
+            gap: 5px;
+        }
+
+        .minimize-btn {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: rgba(255,255,255,0.8);
+            width: 24px;
+            height: 24px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 18px;
+            line-height: 1;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .minimize-btn:hover {
+            background: rgba(0,255,136,0.2);
+            color: #00ff88;
+            transform: scale(1.1);
+        }
+
+        .tile-passport-body {
+            padding: 20px;
+        }
+
+        .tile-info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .tile-info-item {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .info-label {
+            font-size: 11px;
+            color: rgba(255,255,255,0.5);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .info-value {
+            font-size: 14px;
+            color: #00d4ff;
+            font-weight: bold;
+        }
+
+        .tile-location {
+            background: rgba(0,255,136,0.05);
+            border: 1px solid rgba(0,255,136,0.2);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+
+        .location-label {
+            font-size: 12px;
+            color: rgba(255,255,255,0.7);
+            margin-bottom: 8px;
+        }
+
+        .location-value {
+            font-size: 20px;
+            font-weight: bold;
+            color: #00ff88;
+            margin-bottom: 10px;
+            text-shadow: 0 0 10px rgba(0,255,136,0.5);
+        }
+
+        .location-progress {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .progress-bar {
+            flex: 1;
+            height: 6px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00ff88, #00d4ff);
+            width: 14.3%;
+            transition: width 0.5s ease;
+            box-shadow: 0 0 10px rgba(0,255,136,0.8);
+        }
+
+        .progress-text {
+            font-size: 11px;
+            color: rgba(255,255,255,0.6);
+        }
+
+        .tile-status {
+            display: flex;
+            gap: 20px;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            color: rgba(255,255,255,0.8);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #00ff88;
+        }
+
+        .status-dot.pulse {
+            animation: pulse 2s infinite;
+        }
+
+        .kpi-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px;
+            padding: 20px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .kpi-card {
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(20px);
+            border-radius: 15px;
+            padding: 15px;
+            border: 1px solid rgba(255,255,255,0.2);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
+        }
+
+        .kpi-card.clickable {
+            cursor: pointer;
+        }
+
+        .kpi-card::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(45deg, #00ff88, #00d4ff, #ff00ff);
+            border-radius: 15px;
+            opacity: 0;
+            z-index: -1;
+            transition: opacity 0.3s ease;
+        }
+
+        .kpi-card:hover::before {
+            opacity: 0.3;
+        }
+
+        .kpi-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(0,255,255,0.3);
+        }
+
+        .kpi-label {
+            font-size: 11px;
+            color: rgba(255,255,255,0.6);
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .kpi-value {
+            font-size: 28px;
+            font-weight: bold;
+            color: #00ff88;
+            text-shadow: 0 0 20px rgba(0,255,136,0.5);
+        }
+
+        .kpi-unit {
+            font-size: 12px;
+            color: rgba(255,255,255,0.7);
+            margin-left: 3px;
+        }
+
+        .kpi-trend {
+            margin-top: 8px;
+            font-size: 11px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .trend-up {
+            color: #00ff88;
+        }
+
+        .trend-down {
+            color: #ff4444;
+        }
+
+        .production-line {
+            padding: 30px 20px;
+            overflow-x: auto;
+            position: relative;
+        }
+
+        .line-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 1400px;
+            position: relative;
+            padding: 40px 0 250px 0;
+        }
+
+        .station {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            z-index: 10;
+        }
+
+        .station:hover {
+            z-index: 10000;
+        }
+
+        .station-box {
+            width: 140px;
+            height: 140px;
+            background: linear-gradient(145deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05));
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .station-box::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: radial-gradient(circle, rgba(0,255,136,0.3), transparent);
+            transition: all 0.5s ease;
+            transform: translate(-50%, -50%);
+        }
+
+        .station-box:hover::before {
+            width: 150%;
+            height: 150%;
+        }
+
+        .station-box:hover {
+            transform: scale(1.1);
+            border-color: #00ff88;
+            box-shadow: 0 0 30px rgba(0,255,136,0.5);
+        }
+
+        .station-icon {
+            font-size: 36px;
+            margin-bottom: 8px;
+        }
+
+        .station-name {
+            font-size: 12px;
+            text-align: center;
+            color: rgba(255,255,255,0.9);
+            font-weight: 600;
+        }
+
+        .station-protocol {
+            font-size: 9px;
+            color: #00ff88;
+            margin-top: 5px;
+            background: rgba(0,255,136,0.1);
+            padding: 2px 8px;
+            border-radius: 10px;
+        }
+
+        .station-status {
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            width: 20px;
+            height: 20px;
+            background: #00ff88;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+            box-shadow: 0 0 10px rgba(0,255,136,0.8);
+        }
+
+        .station-status.warning {
+            background: #ffaa00;
+            box-shadow: 0 0 10px rgba(255,170,0,0.8);
+        }
+
+        .station-status.error {
+            background: #ff4444;
+            box-shadow: 0 0 10px rgba(255,68,68,0.8);
+        }
+
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(0,255,136,0.8);
+            }
+            70% {
+                box-shadow: 0 0 0 10px rgba(0,255,136,0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(0,255,136,0);
+            }
+        }
+
+        .connection-line {
+            height: 3px;
+            width: 50px;
+            background: linear-gradient(90deg, transparent, #00ff88, transparent);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .connection-line::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, white, transparent);
+            animation: flow 2s linear infinite;
+        }
+
+        @keyframes flow {
+            0% {
+                left: -100%;
+            }
+            100% {
+                left: 100%;
+            }
+        }
+
+        .data-panel {
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 10px;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.3s ease;
+            min-width: 220px;
+            border: 1px solid rgba(0,255,136,0.3);
+            z-index: 9999;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+        }
+
+        .station:hover .data-panel {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .data-section {
+            margin-bottom: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .data-section:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .data-title {
+            color: #00ff88;
+            font-size: 11px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .data-item {
+            display: flex;
+            justify-content: space-between;
+            margin: 3px 0;
+            font-size: 11px;
+        }
+
+        .data-label {
+            color: rgba(255,255,255,0.6);
+        }
+
+        .data-value {
+            color: #00d4ff;
+            font-weight: bold;
+        }
+
+        .data-value.warning {
+            color: #ffaa00;
+        }
+
+        .data-value.error {
+            color: #ff4444;
+        }
+
+        .defect-heatmap {
+            margin-top: 20px;
+            padding: 20px;
+            background: rgba(0,0,0,0.3);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .heatmap-title {
+            font-size: 16px;
+            margin-bottom: 15px;
+            color: rgba(255,255,255,0.9);
+        }
+
+        .heatmap-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+        }
+
+        .defect-item {
+            background: rgba(255,255,255,0.05);
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .defect-name {
+            font-size: 12px;
+            color: rgba(255,255,255,0.7);
+            margin-bottom: 8px;
+        }
+
+        .defect-value {
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .defect-low {
+            color: #00ff88;
+        }
+
+        .defect-medium {
+            color: #ffaa00;
+        }
+
+        .defect-high {
+            color: #ff4444;
+        }
+
+        .control-panel {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(0,0,0,0.9);
+            backdrop-filter: blur(20px);
+            border-radius: 15px;
+            border: 1px solid rgba(255,255,255,0.2);
+            z-index: 100;
+            max-width: 250px;
+            transition: all 0.3s ease;
+        }
+
+        .control-panel:hover {
+            box-shadow: 0 10px 40px rgba(0,255,136,0.3);
+        }
+
+        .control-panel.dragging {
+            opacity: 0.9;
+            box-shadow: 0 15px 50px rgba(0,255,136,0.5);
+            transform: scale(1.02);
+        }
+
+        .control-panel.collapsed #controlButtons {
+            max-height: 0;
+            opacity: 0;
+            overflow: hidden;
+            padding: 0 20px;
+        }
+
+        .control-panel #controlButtons {
+            max-height: 500px;
+            opacity: 1;
+            padding: 0 20px 20px 20px;
+            transition: all 0.3s ease;
+        }
+
+        .control-title {
+            font-size: 14px;
+            padding: 20px;
+            margin-bottom: 0;
+            color: rgba(255,255,255,0.9);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            user-select: none;
+            transition: all 0.3s ease;
+        }
+
+        .control-title:hover {
+            color: #00ff88;
+        }
+
+        .control-title-text {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .control-title-text::before {
+            content: '⋮⋮';
+            color: rgba(255,255,255,0.4);
+            font-size: 10px;
+            letter-spacing: 2px;
+        }
+
+        .collapse-icon {
+            font-size: 18px;
+            transition: transform 0.3s ease;
+            color: rgba(255,255,255,0.6);
+        }
+
+        .control-panel.collapsed .collapse-icon {
+            transform: rotate(180deg);
+        }
+
+        .control-btn {
+            display: block;
+            width: 100%;
+            padding: 10px 15px;
+            margin: 5px 0;
+            background: linear-gradient(145deg, rgba(0,255,136,0.2), rgba(0,255,136,0.1));
+            border: 1px solid rgba(0,255,136,0.5);
+            border-radius: 8px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 12px;
+            text-align: left;
+        }
+
+        .control-btn:hover {
+            background: rgba(0,255,136,0.3);
+            transform: translateX(-5px);
+            box-shadow: 0 5px 15px rgba(0,255,136,0.3);
+        }
+
+        .control-btn.primary {
+            background: linear-gradient(145deg, rgba(0,212,255,0.3), rgba(0,212,255,0.2));
+            border-color: rgba(0,212,255,0.6);
+        }
+
+        .control-btn.primary:hover {
+            background: rgba(0,212,255,0.4);
+            box-shadow: 0 5px 15px rgba(0,212,255,0.4);
+        }
+
+        .playbook-panel {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.9);
+            background: rgba(0,0,0,0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 30px;
+            border: 2px solid rgba(0,255,136,0.5);
+            z-index: 2000;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.3s ease;
+            max-width: 500px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .playbook-panel.show {
+            opacity: 1;
+            pointer-events: all;
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        .playbook-header {
+            font-size: 18px;
+            color: #00ff88;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            color: rgba(255,255,255,0.5);
+            font-size: 24px;
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+
+        .close-btn:hover {
+            color: white;
+        }
+
+        .playbook-content {
+            color: rgba(255,255,255,0.9);
+            line-height: 1.6;
+        }
+
+        .playbook-action {
+            background: rgba(0,255,136,0.1);
+            border: 1px solid rgba(0,255,136,0.3);
+            border-radius: 10px;
+            padding: 10px;
+            margin: 10px 0;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .playbook-action:hover {
+            background: rgba(0,255,136,0.2);
+            transform: translateX(-5px);
+        }
+
+        .critical-event {
+            background: rgba(255,68,68,0.1);
+            border: 1px solid rgba(255,68,68,0.3);
+            border-radius: 10px;
+            padding: 10px;
+            margin-top: 10px;
+            font-size: 11px;
+        }
+
+        .event-time {
+            color: #ff4444;
+            font-weight: bold;
+        }
+
+        .event-desc {
+            color: rgba(255,255,255,0.8);
+            margin-top: 3px;
+        }
+
+        @media (max-width: 768px) {
+            .kpi-container {
+                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            }
+            
+            .control-panel {
+                bottom: 10px;
+                right: 10px;
+                padding: 15px;
+                max-width: 200px;
+            }
+
+            .header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .header-right {
+                width: 100%;
+                justify-content: space-between;
+            }
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        @keyframes slideOut {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-left">
+            <h1 class="lang-text" data-key="title">🏭 Seramik Üretim Hattı - Dijital İkiz</h1>
+            <p class="lang-text" data-key="subtitle">IoT-Ignite + ArMES/MOM + ArAI Entegrasyonu</p>
+        </div>
+        <div class="header-right">
+            <div class="language-switcher">
+                <button class="lang-btn active" id="btn-tr">TR 🇹🇷</button>
+                <button class="lang-btn" id="btn-en">EN 🇬🇧</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating Tile Passport -->
+    <div class="tile-passport-floating" id="tilePassportPanel">
+        <div class="tile-passport-header" id="tilePassportHeader">
+            <div class="tile-passport-title">
+                <span data-tp-label="title">📔 Tile Passport - Canlı İzleme</span>
+            </div>
+            <div class="tile-passport-controls">
+                <button class="minimize-btn" id="minimizeTilePassport">−</button>
+            </div>
+        </div>
+        <div class="tile-passport-body" id="tilePassportBody">
+            <div class="tile-info-grid">
+                <div class="tile-info-item">
+                    <span class="info-label" data-tp-label="tileId">Karo ID:</span>
+                    <span class="info-value">#<span id="tileId">000123</span></span>
+                </div>
+                <div class="tile-info-item">
+                    <span class="info-label" data-tp-label="lot">Parti:</span>
+                    <span class="info-value" id="tileLot">L-4589</span>
+                </div>
+                <div class="tile-info-item">
+                    <span class="info-label" data-tp-label="order">Sipariş:</span>
+                    <span class="info-value" id="tileOrder">O-7721</span>
+                </div>
+                <div class="tile-info-item">
+                    <span class="info-label" data-tp-label="recipe">Reçete:</span>
+                    <span class="info-value" id="tileRecipe">R-GLZ-A17</span>
+                </div>
+            </div>
+            <div class="tile-location">
+                <div class="location-label" data-tp-label="currentLocation">📍 Mevcut Konum</div>
+                <div class="location-value" id="tileLocation">PRES</div>
+                <div class="location-progress">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+                    <div class="progress-text" id="progressText">1/7</div>
+                </div>
+            </div>
+            <div class="tile-status">
+                <div class="status-item">
+                    <span class="status-dot" style="background: #00ff88;"></span>
+                    <span data-tp-label="qualityStatus">Kalite: A</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-dot pulse"></span>
+                    <span data-tp-label="liveTracking">Canlı İzleme Aktif</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="kpi-container">
+        <!-- KPIs will be generated dynamically -->
+    </div>
+
+    <div class="production-line">
+        <div class="line-container" id="lineContainer">
+            <!-- Stations will be generated dynamically -->
+        </div>
+    </div>
+
+    <!-- Defect Heatmap -->
+    <div class="defect-heatmap" style="max-width: 1400px; margin: 0 auto;">
+        <h3 class="heatmap-title lang-text" data-key="heatmapTitle">🔥 FTQ & Defekt Isı Haritası</h3>
+        <div class="heatmap-grid" id="heatmapGrid">
+            <!-- Defects will be generated dynamically -->
+        </div>
+    </div>
+
+    <!-- Control Panel -->
+    <div class="control-panel" id="controlPanel">
+        <div class="control-title" id="controlTitle">
+            <div class="control-title-text">
+                <span class="lang-text" data-key="controlTitle">🎮 Kontrol & Aksiyonlar</span>
+            </div>
+            <span class="collapse-icon">▼</span>
+        </div>
+        <div id="controlButtons">
+            <!-- Control buttons will be generated dynamically -->
+        </div>
+    </div>
+
+    <!-- AI Playbook Panel -->
+    <div class="playbook-panel" id="playbookPanel">
+        <div class="playbook-header">
+            <span class="lang-text" data-key="playbookTitle">🤖 ArAI Chat With Your Factory - Aksiyon Önerisi</span>
+            <button class="close-btn" id="closePlaybook">&times;</button>
+        </div>
+        <div class="playbook-content" id="playbookContent">
+            <!-- Content will be dynamically updated -->
+        </div>
+    </div>
+
+    <!-- OEE Analytics Popup -->
+    <div class="playbook-panel" id="oeePanel" style="max-width: 600px; max-height: 90vh;">
+        <div class="playbook-header">
+            <span id="oeeTitle">📊 OEE Analitik Detayı</span>
+            <button class="close-btn" id="closeOEE">&times;</button>
+        </div>
+        <div class="playbook-content">
+            <!-- OEE Components -->
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 20px;">
+                <div style="text-align: center; background: rgba(0,255,136,0.1); padding: 15px; border-radius: 10px; border: 1px solid rgba(0,255,136,0.3);">
+                    <div style="font-size: 11px; color: rgba(255,255,255,0.6); margin-bottom: 5px;" id="availabilityLabel">Availability</div>
+                    <div style="font-size: 24px; font-weight: bold; color: #00ff88;" id="availabilityValue">92.1%</div>
+                </div>
+                <div style="text-align: center; background: rgba(0,212,255,0.1); padding: 15px; border-radius: 10px; border: 1px solid rgba(0,212,255,0.3);">
+                    <div style="font-size: 11px; color: rgba(255,255,255,0.6); margin-bottom: 5px;" id="performanceLabel">Performance</div>
+                    <div style="font-size: 24px; font-weight: bold; color: #00d4ff;" id="performanceValue">96.8%</div>
+                </div>
+                <div style="text-align: center; background: rgba(255,170,0,0.1); padding: 15px; border-radius: 10px; border: 1px solid rgba(255,170,0,0.3);">
+                    <div style="font-size: 11px; color: rgba(255,255,255,0.6); margin-bottom: 5px;" id="qualityLabel">Quality</div>
+                    <div style="font-size: 24px; font-weight: bold; color: #ffaa00;" id="qualityValue">95.7%</div>
+                </div>
+            </div>
+            
+            <!-- Hourly Trend Chart -->
+            <div style="background: rgba(0,0,0,0.3); border-radius: 10px; padding: 15px; margin-bottom: 20px;">
+                <h4 style="color: #00ff88; margin-bottom: 15px; font-size: 14px;" id="hourlyTrendLabel">Saatlik OEE Trendi (Son 8 Saat)</h4>
+                <div style="position: relative; height: 200px;">
+                    <canvas id="oeeChart" style="width: 100%; height: 100%;"></canvas>
+                </div>
+            </div>
+            
+            <!-- Station Breakdown -->
+            <div style="background: rgba(0,0,0,0.3); border-radius: 10px; padding: 15px; margin-bottom: 20px;">
+                <h4 style="color: #00ff88; margin-bottom: 15px; font-size: 14px;" id="stationBreakdownLabel">İstasyon Bazlı OEE</h4>
+                <div id="stationOEEBars">
+                    <!-- Station bars will be generated here -->
+                </div>
+            </div>
+            
+            <!-- Loss Analysis -->
+            <div style="background: rgba(0,0,0,0.3); border-radius: 10px; padding: 15px;">
+                <h4 style="color: #ff4444; margin-bottom: 15px; font-size: 14px;" id="lossAnalysisLabel">Kayıp Analizi (Son 24 Saat)</h4>
+                <div id="lossBreakdown">
+                    <!-- Loss items will be generated here -->
+                </div>
+            </div>
+            
+            <!-- Action Button -->
+            <button onclick="App.exportOEEReport()" style="
+                width: 100%;
+                margin-top: 20px;
+                padding: 12px;
+                background: linear-gradient(145deg, rgba(0,255,136,0.3), rgba(0,255,136,0.2));
+                border: 1px solid rgba(0,255,136,0.5);
+                border-radius: 8px;
+                color: white;
+                font-size: 14px;
+                font-weight: 600;
+                cursor: pointer;
+                transition: all 0.3s ease;
+            " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 5px 20px rgba(0,255,136,0.4)'"
+               onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none'">
+                <span id="exportButtonText">📊 Detaylı Raporu İndir</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- FTQ Analytics Popup -->
+    <div class="playbook-panel" id="ftqPanel" style="max-width: 600px; max-height: 90vh;">
+        <div class="playbook-header">
+            <span id="ftqTitle">📊 FTQ (First Time Quality) Analitik Detayı</span>
+            <button class="close-btn" onclick="App.closeFTQ()">&times;</button>
+        </div>
+        <div class="playbook-content">
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-bottom: 20px;">
+                <div style="text-align: center; background: rgba(0,255,136,0.1); padding: 15px; border-radius: 10px;">
+                    <div style="font-size: 11px; color: rgba(255,255,255,0.6); margin-bottom: 5px;" id="ftqCurrentLabel">Mevcut FTQ</div>
+                    <div style="font-size: 32px; font-weight: bold; color: #00ff88;" id="ftqCurrentValue">92.7%</div>
+                </div>
+                <div style="text-align: center; background: rgba(255,170,0,0.1); padding: 15px; border-radius: 10px;">
+                    <div style="font-size: 11px; color: rgba(255,255,255,0.6); margin-bottom: 5px;" id="ftqTargetLabel">Hedef</div>
+                    <div style="font-size: 32px; font-weight: bold; color: #ffaa00;">95.0%</div>
+                </div>
+            </div>
+            
+            <div style="background: rgba(0,0,0,0.3); border-radius: 10px; padding: 15px; margin-bottom: 20px;">
+                <h4 style="color: #00ff88; margin-bottom: 15px; font-size: 14px;" id="ftqTrendLabel">Günlük FTQ Trendi</h4>
+                <canvas id="ftqChart" style="width: 100%; height: 200px;"></canvas>
+            </div>
+            
+            <div style="background: rgba(0,0,0,0.3); border-radius: 10px; padding: 15px; margin-bottom: 20px;">
+                <h4 style="color: #00d4ff; margin-bottom: 15px; font-size: 14px;" id="ftqDefectLabel">Kalite Sınıfı Dağılımı</h4>
+                <div id="ftqGradeDistribution"></div>
+            </div>
+            
+            <div style="background: rgba(0,0,0,0.3); border-radius: 10px; padding: 15px;">
+                <h4 style="color: #ff4444; margin-bottom: 15px; font-size: 14px;" id="ftqDefectTypesLabel">En Yaygın Kusur Tipleri</h4>
+                <div id="ftqDefectTypes"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scrap Analytics Popup -->
+    <div class="playbook-panel" id="scrapPanel" style="max-width: 600px; max-height: 90vh;">
+        <div class="playbook-header">
+            <span id="scrapTitle">📊 Hurda Oranı Analitik Detayı</span>
+            <button class="close-btn" onclick="App.closeScrap()">&times;</button>
+        </div>
+        <div class="playbook-content">
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 20px;">
+                <div style="text-align: center; background: rgba(255,68,68,0.1); padding: 15px; border-radius: 10px;">
+                    <div style="font-size: 11px; color: rgba(255,255,255,0.6);" id="scrapCurrentLabel">Mevcut Hurda</div>
+                    <div style="font-size: 28px; font-weight: bold; color: #ff4444;" id="scrapCurrentValue">3.2%</div>
+                </div>
+                <div style="text-align: center; background: rgba(0,255,136,0.1); padding: 15px; border-radius: 10px;">
+                    <div style="font-size: 11px; color: rgba(255,255,255,0.6);" id="scrapTargetLabel">Hedef</div>
+                    <div style="font-size: 28px; font-weight: bold; color: #00ff88;">< 2.0%</div>
+                </div>
+                <div style="text-align: center; background: rgba(255,170,0,0.1); padding: 15px; border-radius: 10px;">
+                    <div style="font-size: 11px; color: rgba(255,255,255,0.6);" id="scrapCostLabel">Günlük Maliyet</div>
+                    <div style="font-size: 28px; font-weight: bold; color: #ffaa00;">₺8,450</div>
+                </div>
+            </div>
+            
+            <div style="background: rgba(0,0,0,0.3); border-radius: 10px; padding: 15px; margin-bottom: 20px;">
+                <h4 style="color: #ff4444; margin-bottom: 15px; font-size: 14px;" id="scrapByStationLabel">İstasyon Bazlı Hurda Oranları</h4>
+                <canvas id="scrapChart" style="width: 100%; height: 200px;"></canvas>
+            </div>
+            
+            <div style="background: rgba(0,0,0,0.3); border-radius: 10px; padding: 15px;">
+                <h4 style="color: #ffaa00; margin-bottom: 15px; font-size: 14px;" id="scrapReasonsLabel">Hurda Nedenleri</h4>
+                <div id="scrapReasons"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Energy Analytics Popup -->
+    <div class="playbook-panel" id="energyPanel" style="max-width: 600px; max-height: 90vh;">
+        <div class="playbook-header">
+            <span id="energyTitle">📊 Enerji Tüketimi Analitik Detayı</span>
+            <button class="close-btn" onclick="App.closeEnergy()">&times;</button>
+        </div>
+        <div class="playbook-content">
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-bottom: 20px;">
+                <div style="text-align: center; background: rgba(255,170,0,0.1); padding: 15px; border-radius: 10px;">
+                    <div style="font-size: 11px; color: rgba(255,255,255,0.6);" id="energyCurrentLabel">Günlük Tüketim</div>
+                    <div style="font-size: 28px; font-weight: bold; color: #ffaa00;">24.5 kWh/m²</div>
+                </div>
+                <div style="text-align: center; background: rgba(0,255,136,0.1); padding: 15px; border-radius: 10px;">
+                    <div style="font-size: 11px; color: rgba(255,255,255,0.6);" id="energySavingsLabel">Tasarruf</div>
+                    <div style="font-size: 28px; font-weight: bold; color: #00ff88;">↓ 3.2%</div>
+                </div>
+            </div>
+            
+            <div style="background: rgba(0,0,0,0.3); border-radius: 10px; padding: 15px; margin-bottom: 20px;">
+                <h4 style="color: #ffaa00; margin-bottom: 15px; font-size: 14px;" id="energyConsumptionLabel">Saatlik Enerji Tüketimi</h4>
+                <canvas id="energyChart" style="width: 100%; height: 200px;"></canvas>
+            </div>
+            
+            <div style="background: rgba(0,0,0,0.3); border-radius: 10px; padding: 15px; margin-bottom: 20px;">
+                <h4 style="color: #00d4ff; margin-bottom: 15px; font-size: 14px;" id="energyByStationLabel">İstasyon Bazlı Tüketim</h4>
+                <div id="energyByStation"></div>
+            </div>
+            
+            <div style="background: rgba(0,0,0,0.3); border-radius: 10px; padding: 15px;">
+                <h4 style="color: #00ff88; margin-bottom: 15px; font-size: 14px;" id="energyEfficiencyLabel">Verimlilik Metrikleri</h4>
+                <div id="energyEfficiency"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CO2 Analytics Popup -->
+    <div class="playbook-panel" id="co2Panel" style="max-width: 600px; max-height: 90vh;">
+        <div class="playbook-header">
+            <span id="co2Title">📊 CO₂ Emisyon Analitik Detayı</span>
+            <button class="close-btn" onclick="App.closeCO2()">&times;</button>
+        </div>
+        <div class="playbook-content">
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 20px;">
+                <div style="text-align: center; background: rgba(0,212,255,0.1); padding: 15px; border-radius: 10px;">
+                    <div style="font-size: 11px; color: rgba(255,255,255,0.6);" id="co2CurrentLabel">Günlük Emisyon</div>
+                    <div style="font-size: 28px; font-weight: bold; color: #00d4ff;">12.8 kg/m²</div>
+                </div>
+                <div style="text-align: center; background: rgba(0,255,136,0.1); padding: 15px; border-radius: 10px;">
+                    <div style="font-size: 11px; color: rgba(255,255,255,0.6);" id="co2ReductionLabel">Azalma</div>
+                    <div style="font-size: 28px; font-weight: bold; color: #00ff88;">↓ 4.1%</div>
+                </div>
+                <div style="text-align: center; background: rgba(255,255,255,0.1); padding: 15px; border-radius: 10px;">
+                    <div style="font-size: 11px; color: rgba(255,255,255,0.6);" id="co2TargetLabel">2025 Hedefi</div>
+                    <div style="font-size: 28px; font-weight: bold; color: white;">10 kg/m²</div>
+                </div>
+            </div>
+            
+            <div style="background: rgba(0,0,0,0.3); border-radius: 10px; padding: 15px; margin-bottom: 20px;">
+                <h4 style="color: #00d4ff; margin-bottom: 15px; font-size: 14px;" id="co2TrendLabel">Aylık CO₂ Emisyon Trendi</h4>
+                <canvas id="co2Chart" style="width: 100%; height: 200px;"></canvas>
+            </div>
+            
+            <div style="background: rgba(0,0,0,0.3); border-radius: 10px; padding: 15px; margin-bottom: 20px;">
+                <h4 style="color: #ffaa00; margin-bottom: 15px; font-size: 14px;" id="co2SourcesLabel">Emisyon Kaynakları</h4>
+                <div id="co2Sources"></div>
+            </div>
+            
+            <div style="background: rgba(0,0,0,0.3); border-radius: 10px; padding: 15px;">
+                <h4 style="color: #00ff88; margin-bottom: 15px; font-size: 14px;" id="co2ActionsLabel">Karbon Azaltım Aksiyonları</h4>
+                <div id="co2Actions"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Color Consistency (ΔE) Analytics Popup -->
+    <div class="playbook-panel" id="deltaEPanel" style="max-width: 600px; max-height: 90vh;">
+        <div class="playbook-header">
+            <span id="deltaETitle">📊 Renk Tutarlılığı (ΔE) Analitik Detayı</span>
+            <button class="close-btn" onclick="App.closeDeltaE()">&times;</button>
+        </div>
+        <div class="playbook-content">
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 20px;">
+                <div style="text-align: center; background: rgba(0,255,136,0.1); padding: 15px; border-radius: 10px;">
+                    <div style="font-size: 11px; color: rgba(255,255,255,0.6);" id="deltaECurrentLabel">Mevcut ΔE</div>
+                    <div style="font-size: 32px; font-weight: bold; color: #00ff88;">1.8</div>
+                </div>
+                <div style="text-align: center; background: rgba(255,170,0,0.1); padding: 15px; border-radius: 10px;">
+                    <div style="font-size: 11px; color: rgba(255,255,255,0.6);" id="deltaETargetLabel">Hedef</div>
+                    <div style="font-size: 32px; font-weight: bold; color: #ffaa00;">< 2.0</div>
+                </div>
+                <div style="text-align: center; background: rgba(0,212,255,0.1); padding: 15px; border-radius: 10px;">
+                    <div style="font-size: 11px; color: rgba(255,255,255,0.6);" id="deltaEPassRateLabel">Uygunluk</div>
+                    <div style="font-size: 32px; font-weight: bold; color: #00d4ff;">96.3%</div>
+                </div>
+            </div>
+            
+            <div style="background: rgba(0,0,0,0.3); border-radius: 10px; padding: 15px; margin-bottom: 20px;">
+                <h4 style="color: #00ff88; margin-bottom: 15px; font-size: 14px;" id="deltaETrendLabel">Renk Sapma Trendi</h4>
+                <canvas id="deltaEChart" style="width: 100%; height: 200px;"></canvas>
+            </div>
+            
+            <div style="background: rgba(0,0,0,0.3); border-radius: 10px; padding: 15px; margin-bottom: 20px;">
+                <h4 style="color: #00d4ff; margin-bottom: 15px; font-size: 14px;" id="deltaEDistributionLabel">ΔE Değer Dağılımı</h4>
+                <div id="deltaEDistribution"></div>
+            </div>
+            
+            <div style="background: rgba(0,0,0,0.3); border-radius: 10px; padding: 15px;">
+                <h4 style="color: #ffaa00; margin-bottom: 15px; font-size: 14px;" id="deltaEParametersLabel">Renk Parametreleri (L*a*b*)</h4>
+                <div id="deltaEParameters"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contact Form Popup -->
+    <div class="playbook-panel" id="contactFormPanel">
+        <div class="playbook-header">
+            <span class="lang-text" data-key="contactFormTitle">📞 İletişim Formu</span>
+            <button class="close-btn" id="closeContactForm">&times;</button>
+        </div>
+        <div class="playbook-content">
+            <form id="contactForm" style="display: flex; flex-direction: column; gap: 20px;">
+                <div>
+                    <label for="phoneInput" style="display: block; margin-bottom: 8px; color: #00ff88; font-size: 14px;" class="lang-text" data-key="phoneLabel">Telefon Numaranız:</label>
+                    <input type="tel" id="phoneInput" placeholder="+90 5XX XXX XX XX" style="
+                        width: 100%;
+                        padding: 12px;
+                        background: rgba(255,255,255,0.1);
+                        border: 1px solid rgba(0,255,136,0.3);
+                        border-radius: 8px;
+                        color: white;
+                        font-size: 14px;
+                        outline: none;
+                        transition: all 0.3s ease;
+                    " onfocus="this.style.borderColor='#00ff88'; this.style.boxShadow='0 0 10px rgba(0,255,136,0.3)'" 
+                       onblur="this.style.borderColor='rgba(0,255,136,0.3)'; this.style.boxShadow='none'">
+                </div>
+                
+                <div>
+                    <label for="noteInput" style="display: block; margin-bottom: 8px; color: #00ff88; font-size: 14px;" class="lang-text" data-key="noteLabel">Notunuz:</label>
+                    <textarea id="noteInput" rows="4" placeholder="İhtiyaçlarınızı kısaca yazın..." style="
+                        width: 100%;
+                        padding: 12px;
+                        background: rgba(255,255,255,0.1);
+                        border: 1px solid rgba(0,255,136,0.3);
+                        border-radius: 8px;
+                        color: white;
+                        font-size: 14px;
+                        outline: none;
+                        resize: vertical;
+                        transition: all 0.3s ease;
+                        font-family: inherit;
+                    " onfocus="this.style.borderColor='#00ff88'; this.style.boxShadow='0 0 10px rgba(0,255,136,0.3)'" 
+                       onblur="this.style.borderColor='rgba(0,255,136,0.3)'; this.style.boxShadow='none'"></textarea>
+                </div>
+                
+                <button type="submit" style="
+                    padding: 12px 24px;
+                    background: linear-gradient(145deg, rgba(0,255,136,0.3), rgba(0,255,136,0.2));
+                    border: 1px solid rgba(0,255,136,0.5);
+                    border-radius: 8px;
+                    color: white;
+                    font-size: 16px;
+                    font-weight: 600;
+                    cursor: pointer;
+                    transition: all 0.3s ease;
+                " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 5px 20px rgba(0,255,136,0.4)'"
+                   onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none'">
+                    <span class="lang-text" data-key="submitButton">📤 Gönder</span>
+                </button>
+                
+                <p style="font-size: 11px; color: rgba(255,255,255,0.5); text-align: center; margin: 0;">
+                    <span class="lang-text" data-key="privacyNote">Bilgileriniz güvendedir. 24 saat içinde dönüş yapılacaktır.</span>
+                </p>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Clean, professional code with a single global App object
+        const App = {
+            // Configuration
+            config: {
+                currentLang: 'tr',
+                dataFlowInterval: null,
+                isDataFlowing: false,
+                tilePosition: 0,
+                currentTile: {
+                    id: '000123',
+                    lot: 'L-4589',
+                    order: 'O-7721',
+                    recipe: 'R-GLZ-A17'
+                }
+            },
+
+            // Language translations
+            translations: {
+                tr: {
+                    title: '🏭 Seramik Üretim Hattı - Dijital İkiz',
+                    subtitle: 'IoT-Ignite + ArMES/MOM + ArAI Entegrasyonu',
+                    controlTitle: '🎮 Kontrol & Aksiyonlar',
+                    heatmapTitle: '🔥 FTQ & Defekt Isı Haritası',
+                    playbookTitle: '🤖 ArAI Chat With Your Factory - Aksiyon Önerisi',
+                    
+                    // OEE Analytics translations
+                    oeeAnalytics: {
+                        title: '📊 OEE Analitik Detayı',
+                        availability: 'Kullanılabilirlik',
+                        performance: 'Performans',
+                        quality: 'Kalite',
+                        hourlyTrend: 'Saatlik OEE Trendi (Son 8 Saat)',
+                        stationBreakdown: 'İstasyon Bazlı OEE',
+                        lossAnalysis: 'Kayıp Analizi (Son 24 Saat)',
+                        exportButton: '📊 Detaylı Raporu İndir',
+                        losses: {
+                            plannedMaintenance: 'Planlı Bakım',
+                            unplannedDowntime: 'Plansız Duruş',
+                            changeOver: 'Ürün Değişimi',
+                            minorStops: 'Küçük Duruşlar',
+                            speedLoss: 'Hız Kaybı',
+                            qualityDefects: 'Kalite Kayıpları'
+                        }
+                    },
+                    
+                    // Tile Passport translations
+                    tilePassport: {
+                        title: '📔 Tile Passport - Canlı İzleme',
+                        tileId: 'Karo ID',
+                        lot: 'Parti',
+                        order: 'Sipariş',
+                        recipe: 'Reçete',
+                        currentLocation: '📍 Mevcut Konum',
+                        qualityStatus: 'Kalite: A',
+                        liveTracking: 'Canlı İzleme Aktif'
+                    },
+                    
+                    // Station names
+                    stations: ['PRES', 'KURUTMA', 'SIR/RENK', 'DİJİTAL BASKI', 'FIRIN', 'AYIKLAMA', 'PAKETLEME'],
+                    
+                    // KPI labels
+                    kpis: {
+                        oee: { label: 'OEE', trend: '↑ %2.1 artış (vardiya bazlı)' },
+                        ftq: { label: 'FTQ', trend: '↑ %1.3 iyileşme' },
+                        scrap: { label: 'Hurda Oranı', trend: '↓ %0.5 azalma (kenar kırığı)' },
+                        energy: { label: 'Enerji Tüketimi', trend: '↓ %3.2 tasarruf' },
+                        co2: { label: 'CO₂ Emisyonu', trend: '↓ %4.1 azalma' },
+                        deltaE: { label: 'Renk Tutarlılığı (ΔE)', trend: '✓ Hedef < 2.0' }
+                    },
+                    
+                    // Control buttons
+                    controls: {
+                        dataFlow: '🔄 Veri Akışını Başlat',
+                        dataFlowStop: '⏸️ Veri Akışını Durdur',
+                        tilePassport: '📔 Tile Passport Detayı',
+                        aiPlaybook: '🤖 ArAI Playbook Önerisi',
+                        criticalEvent: '⚠️ Kritik Olay Simülasyonu',
+                        heatmapUpdate: '🔥 Defekt Haritası Güncelle',
+                        cta: '📞 Sizi Arayalım'
+                    },
+                    
+                    // Defect names
+                    defects: {
+                        pinhole: 'Pinhole',
+                        glaze: 'Glaze Akması',
+                        banding: 'Banding',
+                        black: 'Siyah Çekirdek',
+                        ghosting: 'Ghosting',
+                        edge: 'Kenar Kırığı',
+                        crack: 'Çatlak',
+                        pattern: 'Desen Kayması'
+                    },
+                    
+                    // Messages
+                    systemActive: '🚀 Sistem aktif - Gerçek zamanlı izleme başladı',
+                    heatmapUpdated: '🔥 Defekt ısı haritası güncellendi',
+                    
+                    // Contact form
+                    contactFormTitle: '📞 İletişim Formu',
+                    phoneLabel: 'Telefon Numaranız:',
+                    noteLabel: 'Notunuz:',
+                    submitButton: '📤 Gönder',
+                    privacyNote: 'Bilgileriniz güvendedir. 24 saat içinde dönüş yapılacaktır.',
+                    successMessage: '✅ Formunuz başarıyla gönderildi! En kısa sürede sizi arayacağız.',
+                    
+                    // Station data labels
+                    stationData: {
+                        collectedData: '📊 Toplanan Veri',
+                        affectedKPIs: '🎯 Etkilenen KPI'
+                    }
+                },
+                
+                en: {
+                    title: '🏭 Ceramic Production Line - Digital Twin',
+                    subtitle: 'IoT-Ignite + ArMES/MOM + ArAI Integration',
+                    controlTitle: '🎮 Control & Actions',
+                    heatmapTitle: '🔥 FTQ & Defect Heatmap',
+                    playbookTitle: '🤖 ArAI Chat With Your Factory - Action Suggestion',
+                    
+                    // OEE Analytics translations
+                    oeeAnalytics: {
+                        title: '📊 OEE Analytics Detail',
+                        availability: 'Availability',
+                        performance: 'Performance',
+                        quality: 'Quality',
+                        hourlyTrend: 'Hourly OEE Trend (Last 8 Hours)',
+                        stationBreakdown: 'Station-Based OEE',
+                        lossAnalysis: 'Loss Analysis (Last 24 Hours)',
+                        exportButton: '📊 Download Detailed Report',
+                        losses: {
+                            plannedMaintenance: 'Planned Maintenance',
+                            unplannedDowntime: 'Unplanned Downtime',
+                            changeOver: 'Changeover',
+                            minorStops: 'Minor Stops',
+                            speedLoss: 'Speed Loss',
+                            qualityDefects: 'Quality Losses'
+                        }
+                    },
+                    
+                    // Tile Passport translations
+                    tilePassport: {
+                        title: '📔 Tile Passport - Live Tracking',
+                        tileId: 'Tile ID',
+                        lot: 'Lot',
+                        order: 'Order',
+                        recipe: 'Recipe',
+                        currentLocation: '📍 Current Location',
+                        qualityStatus: 'Quality: A',
+                        liveTracking: 'Live Tracking Active'
+                    },
+                    
+                    // Station names
+                    stations: ['PRESS', 'DRYING', 'GLAZE/COLOR', 'DIGITAL PRINTING', 'KILN', 'SORTING', 'PACKAGING'],
+                    
+                    // KPI labels
+                    kpis: {
+                        oee: { label: 'OEE', trend: '↑ 2.1% increase (shift-based)' },
+                        ftq: { label: 'FTQ', trend: '↑ 1.3% improvement' },
+                        scrap: { label: 'Scrap Rate', trend: '↓ 0.5% reduction (edge break)' },
+                        energy: { label: 'Energy Consumption', trend: '↓ 3.2% savings' },
+                        co2: { label: 'CO₂ Emission', trend: '↓ 4.1% reduction' },
+                        deltaE: { label: 'Color Consistency (ΔE)', trend: '✓ Target < 2.0' }
+                    },
+                    
+                    // Control buttons
+                    controls: {
+                        dataFlow: '🔄 Start Data Flow',
+                        dataFlowStop: '⏸️ Stop Data Flow',
+                        tilePassport: '📔 Tile Passport Details',
+                        aiPlaybook: '🤖 ArAI Playbook Suggestion',
+                        criticalEvent: '⚠️ Critical Event Simulation',
+                        heatmapUpdate: '🔥 Update Defect Heatmap',
+                        cta: '📞 We Call You'
+                    },
+                    
+                    // Defect names
+                    defects: {
+                        pinhole: 'Pinhole',
+                        glaze: 'Glaze Flow',
+                        banding: 'Banding',
+                        black: 'Black Core',
+                        ghosting: 'Ghosting',
+                        edge: 'Edge Break',
+                        crack: 'Crack',
+                        pattern: 'Pattern Shift'
+                    },
+                    
+                    // Messages
+                    systemActive: '🚀 System active - Real-time monitoring started',
+                    heatmapUpdated: '🔥 Defect heatmap updated',
+                    
+                    // Contact form
+                    contactFormTitle: '📞 Contact Form',
+                    phoneLabel: 'Your Phone Number:',
+                    noteLabel: 'Your Note:',
+                    submitButton: '📤 Send',
+                    privacyNote: 'Your information is secure. We will respond within 24 hours.',
+                    successMessage: '✅ Form submitted successfully! We will call you soon.',
+                    
+                    // Station data labels
+                    stationData: {
+                        collectedData: '📊 Collected Data',
+                        affectedKPIs: '🎯 Affected KPIs'
+                    }
+                }
+            },
+
+            // Initialize application
+            init() {
+                this.setupLanguageSwitcher();
+                this.renderKPIs();
+                this.renderStations();
+                this.renderDefectHeatmap();
+                this.renderControlPanel();
+                this.updateLanguage();
+                this.startDataFlow();
+                this.makeControlPanelDraggable();
+                this.makeTilePassportDraggable();
+                this.setupContactForm();
+                this.setupOEEClick();
+                
+                // Event listeners
+                document.getElementById('closePlaybook').addEventListener('click', () => this.closePlaybook());
+                document.getElementById('closeContactForm').addEventListener('click', () => this.closeContactForm());
+                document.getElementById('closeOEE').addEventListener('click', () => this.closeOEE());
+                document.getElementById('minimizeTilePassport').addEventListener('click', () => this.toggleTilePassport());
+                
+                // Show initial notification
+                setTimeout(() => {
+                    this.showNotification(this.translations[this.config.currentLang].systemActive);
+                }, 1000);
+            },
+
+            // Language switcher setup
+            setupLanguageSwitcher() {
+                document.getElementById('btn-tr').addEventListener('click', () => this.changeLanguage('tr'));
+                document.getElementById('btn-en').addEventListener('click', () => this.changeLanguage('en'));
+            },
+
+            // Change language
+            changeLanguage(lang) {
+                this.config.currentLang = lang;
+                
+                // Update button states
+                document.querySelectorAll('.lang-btn').forEach(btn => btn.classList.remove('active'));
+                document.getElementById(`btn-${lang}`).classList.add('active');
+                
+                // Update all text elements
+                this.updateLanguage();
+                
+                // Re-render dynamic components
+                this.renderStations();
+            },
+
+            // Update all language-dependent content
+            updateLanguage() {
+                const lang = this.config.currentLang;
+                const trans = this.translations[lang];
+                
+                // Update simple text elements
+                document.querySelectorAll('.lang-text').forEach(element => {
+                    const key = element.getAttribute('data-key');
+                    if (trans[key]) {
+                        element.textContent = trans[key];
+                    }
+                });
+                
+                // Update Tile Passport labels
+                const tpTrans = this.translations[lang].tilePassport;
+                document.querySelectorAll('[data-tp-label]').forEach(element => {
+                    const key = element.getAttribute('data-tp-label');
+                    if (tpTrans && tpTrans[key]) {
+                        if (element.classList.contains('info-label')) {
+                            element.textContent = tpTrans[key] + ':';
+                        } else {
+                            element.textContent = tpTrans[key];
+                        }
+                    }
+                });
+                
+                // Update tile info
+                this.updateTileInfo();
+                
+                // Update control buttons
+                this.updateControlButtons();
+                
+                // Update KPI labels
+                this.updateKPILabels();
+                
+                // Update defect names
+                this.updateDefectNames();
+                
+                // Update document language
+                document.documentElement.lang = lang;
+            },
+
+            // Render KPIs
+            renderKPIs() {
+                const container = document.querySelector('.kpi-container');
+                const kpiData = [
+                    { id: 'oee', value: '85.3', unit: '%', key: 'oee', clickable: true },
+                    { id: 'ftq', value: '92.7', unit: '%', key: 'ftq', clickable: true },
+                    { id: 'scrap', value: '3.2', unit: '%', key: 'scrap', clickable: true },
+                    { id: 'energy', value: '24.5', unit: 'kWh/m²', key: 'energy', clickable: true },
+                    { id: 'co2', value: '12.8', unit: 'kg/m²', key: 'co2', clickable: true },
+                    { id: 'delta-e', value: '1.8', unit: '', key: 'deltaE', clickable: true }
+                ];
+                
+                container.innerHTML = kpiData.map(kpi => `
+                    <div class="kpi-card ${kpi.clickable ? 'clickable' : ''}" ${kpi.clickable ? `id="${kpi.id}-card"` : ''}>
+                        <div class="kpi-label" data-kpi-key="${kpi.key}">OEE</div>
+                        <div class="kpi-value" id="${kpi.id}-value">${kpi.value}<span class="kpi-unit">${kpi.unit}</span></div>
+                        <div class="kpi-trend ${kpi.key === 'scrap' || kpi.key === 'energy' || kpi.key === 'co2' ? 'trend-down' : 'trend-up'}" data-kpi-trend="${kpi.key}">Trend</div>
+                    </div>
+                `).join('');
+            },
+
+            // Update KPI labels
+            updateKPILabels() {
+                const trans = this.translations[this.config.currentLang].kpis;
+                
+                document.querySelectorAll('[data-kpi-key]').forEach(element => {
+                    const key = element.getAttribute('data-kpi-key');
+                    if (trans[key]) {
+                        element.textContent = trans[key].label;
+                    }
+                });
+                
+                document.querySelectorAll('[data-kpi-trend]').forEach(element => {
+                    const key = element.getAttribute('data-kpi-trend');
+                    if (trans[key]) {
+                        element.textContent = trans[key].trend;
+                    }
+                });
+            },
+
+            // Render production line stations with full data
+            renderStations() {
+                const container = document.getElementById('lineContainer');
+                const lang = this.config.currentLang;
+                
+                const stations = [
+                    { icon: '🔨', protocol: 'Modbus TCP', status: 'normal' },
+                    { icon: '💨', protocol: 'OPC-UA', status: 'normal' },
+                    { icon: '🎨', protocol: 'Modbus RTU', status: 'warning' },
+                    { icon: '🖨️', protocol: 'OPC-UA', status: 'normal' },
+                    { icon: '🔥', protocol: 'Modbus TCP', status: 'error' },
+                    { icon: '🔍', protocol: 'OPC-UA + Vision', status: 'normal' },
+                    { icon: '📦', protocol: 'Modbus RTU', status: 'normal' }
+                ];
+                
+                // Station data for both languages
+                const stationData = {
+                    tr: [
+                        // PRES
+                        {
+                            collected: [
+                                { label: 'Pres Kuvveti', value: '2500 bar' },
+                                { label: 'Titreşim', value: '0.8 mm/s' },
+                                { label: 'Kalıp Sensörleri', value: '✓ OK' },
+                                { label: 'Reçete ID', value: 'R-GLZ-A17' }
+                            ],
+                            kpis: [
+                                { label: 'OEE', value: '96%' },
+                                { label: 'Hurda % (kenar)', value: '2.1%', status: 'warning' },
+                                { label: 'FTQ', value: '94%' }
+                            ]
+                        },
+                        // KURUTMA
+                        {
+                            collected: [
+                                { label: 'Nem', value: '5%' },
+                                { label: 'Sıcaklık Zonları', value: '110-125-118°C' },
+                                { label: 'Bant Hızı', value: '2.5 m/dk' }
+                            ],
+                            kpis: [
+                                { label: 'Deformasyon', value: '0.3%' },
+                                { label: 'Çatlak', value: '0.1%' },
+                                { label: 'Enerji', value: '3.2 kWh/m²' }
+                            ]
+                        },
+                        // SIR/RENK
+                        {
+                            collected: [
+                                { label: 'Viskozite', value: '45 sn', status: 'warning' },
+                                { label: 'Gramaj', value: '680 g/m²' },
+                                { label: 'Nozul/Disk Hızı', value: '1250 rpm' }
+                            ],
+                            kpis: [
+                                { label: 'Glaze Akması', value: '1.2%', status: 'warning' },
+                                { label: 'Pinhole', value: '0.8%' },
+                                { label: 'Renk Tutarlılığı (ΔE)', value: '1.8' }
+                            ],
+                            event: { time: '14:32', desc: 'Viskozite hedef dışı' }
+                        },
+                        // DİJİTAL BASKI
+                        {
+                            collected: [
+                                { label: 'Printhead Sıcaklık', value: '42°C' },
+                                { label: 'Printhead Basınç', value: '2.1 bar' },
+                                { label: 'Nozzle Health', value: '86%', status: 'warning' },
+                                { label: 'Registration', value: '±0.5mm' }
+                            ],
+                            kpis: [
+                                { label: 'Banding', value: '0.5%' },
+                                { label: 'Ghosting', value: '0.2%' },
+                                { label: 'Desen Kayması', value: '0.3%' }
+                            ]
+                        },
+                        // FIRIN
+                        {
+                            collected: [
+                                { label: 'Isı Eğrisi (set/real)', value: '1185/1203°C' },
+                                { label: 'Zon Gaz Tüketimi', value: '320 m³/h' },
+                                { label: 'Konveyör Hızı', value: '1.8 m/dk' }
+                            ],
+                            kpis: [
+                                { label: 'Siyah Çekirdek', value: '0.4%' },
+                                { label: 'Pişme Kusuru', value: '0.6%' },
+                                { label: 'Enerji', value: '18.2 kWh/m²', status: 'error' },
+                                { label: 'CO₂', value: '9.8 kg/m²' }
+                            ],
+                            event: { time: '14:32', desc: 'Zon-5 sıcaklık sapması (+18°C)' }
+                        },
+                        // AYIKLAMA
+                        {
+                            collected: [
+                                { label: 'Vision/Kamera', value: 'AI Vision 4K' },
+                                { label: 'Defekt Sınıfları', value: '12 aktif' },
+                                { label: 'Ölçü/Çarpıklık', value: '±0.8mm' },
+                                { label: 'Yüzey Parlaklığı', value: '92 gloss' }
+                            ],
+                            kpis: [
+                                { label: 'FTQ', value: '92.7%' },
+                                { label: 'Sınıf A', value: '85%' },
+                                { label: 'Sınıf B', value: '12%' },
+                                { label: 'Rework', value: '3%' }
+                            ]
+                        },
+                        // PAKETLEME
+                        {
+                            collected: [
+                                { label: 'Lot/Order_ID', value: 'L-4589/O-7721' },
+                                { label: 'Koli İçi Adet', value: '6 adet' },
+                                { label: 'Ağırlık', value: '28.5 kg' },
+                                { label: 'Barkod', value: '✓ Okundu' }
+                            ],
+                            kpis: [
+                                { label: 'İzlenebilirlik', value: '100%' },
+                                { label: 'İade/Şikayet', value: '0.8%' }
+                            ]
+                        }
+                    ],
+                    en: [
+                        // PRESS
+                        {
+                            collected: [
+                                { label: 'Press Force', value: '2500 bar' },
+                                { label: 'Vibration', value: '0.8 mm/s' },
+                                { label: 'Mold Sensors', value: '✓ OK' },
+                                { label: 'Recipe ID', value: 'R-GLZ-A17' }
+                            ],
+                            kpis: [
+                                { label: 'OEE', value: '96%' },
+                                { label: 'Scrap % (edge)', value: '2.1%', status: 'warning' },
+                                { label: 'FTQ', value: '94%' }
+                            ]
+                        },
+                        // DRYING
+                        {
+                            collected: [
+                                { label: 'Humidity', value: '5%' },
+                                { label: 'Temperature Zones', value: '110-125-118°C' },
+                                { label: 'Belt Speed', value: '2.5 m/min' }
+                            ],
+                            kpis: [
+                                { label: 'Deformation', value: '0.3%' },
+                                { label: 'Crack', value: '0.1%' },
+                                { label: 'Energy', value: '3.2 kWh/m²' }
+                            ]
+                        },
+                        // GLAZE/COLOR
+                        {
+                            collected: [
+                                { label: 'Viscosity', value: '45 s', status: 'warning' },
+                                { label: 'Weight', value: '680 g/m²' },
+                                { label: 'Nozzle/Disk Speed', value: '1250 rpm' }
+                            ],
+                            kpis: [
+                                { label: 'Glaze Flow', value: '1.2%', status: 'warning' },
+                                { label: 'Pinhole', value: '0.8%' },
+                                { label: 'Color Consistency (ΔE)', value: '1.8' }
+                            ],
+                            event: { time: '14:32', desc: 'Viscosity out of target' }
+                        },
+                        // DIGITAL PRINTING
+                        {
+                            collected: [
+                                { label: 'Printhead Temperature', value: '42°C' },
+                                { label: 'Printhead Pressure', value: '2.1 bar' },
+                                { label: 'Nozzle Health', value: '86%', status: 'warning' },
+                                { label: 'Registration', value: '±0.5mm' }
+                            ],
+                            kpis: [
+                                { label: 'Banding', value: '0.5%' },
+                                { label: 'Ghosting', value: '0.2%' },
+                                { label: 'Pattern Shift', value: '0.3%' }
+                            ]
+                        },
+                        // KILN
+                        {
+                            collected: [
+                                { label: 'Heat Curve (set/real)', value: '1185/1203°C' },
+                                { label: 'Zone Gas Consumption', value: '320 m³/h' },
+                                { label: 'Conveyor Speed', value: '1.8 m/min' }
+                            ],
+                            kpis: [
+                                { label: 'Black Core', value: '0.4%' },
+                                { label: 'Firing Defect', value: '0.6%' },
+                                { label: 'Energy', value: '18.2 kWh/m²', status: 'error' },
+                                { label: 'CO₂', value: '9.8 kg/m²' }
+                            ],
+                            event: { time: '14:32', desc: 'Zone-5 temperature deviation (+18°C)' }
+                        },
+                        // SORTING
+                        {
+                            collected: [
+                                { label: 'Vision/Camera', value: 'AI Vision 4K' },
+                                { label: 'Defect Classes', value: '12 active' },
+                                { label: 'Size/Warpage', value: '±0.8mm' },
+                                { label: 'Surface Glossiness', value: '92 gloss' }
+                            ],
+                            kpis: [
+                                { label: 'FTQ', value: '92.7%' },
+                                { label: 'Grade A', value: '85%' },
+                                { label: 'Grade B', value: '12%' },
+                                { label: 'Rework', value: '3%' }
+                            ]
+                        },
+                        // PACKAGING
+                        {
+                            collected: [
+                                { label: 'Lot/Order_ID', value: 'L-4589/O-7721' },
+                                { label: 'Pieces per Box', value: '6 pieces' },
+                                { label: 'Weight', value: '28.5 kg' },
+                                { label: 'Barcode', value: '✓ Scanned' }
+                            ],
+                            kpis: [
+                                { label: 'Traceability', value: '100%' },
+                                { label: 'Returns/Complaints', value: '0.8%' }
+                            ]
+                        }
+                    ]
+                };
+
+                let html = '';
+                stations.forEach((station, index) => {
+                    if (index > 0) {
+                        html += '<div class="connection-line"></div>';
+                    }
+                    
+                    const data = stationData[lang][index];
+                    const trans = this.translations[lang].stationData;
+                    
+                    // Build data panel HTML
+                    let dataPanelHTML = `
+                        <div class="data-section">
+                            <div class="data-title">${trans.collectedData}</div>
+                    `;
+                    
+                    data.collected.forEach(item => {
+                        const statusClass = item.status || '';
+                        dataPanelHTML += `
+                            <div class="data-item">
+                                <span class="data-label">${item.label}:</span>
+                                <span class="data-value ${statusClass}">${item.value}</span>
+                            </div>
+                        `;
+                    });
+                    
+                    dataPanelHTML += `
+                        </div>
+                        <div class="data-section">
+                            <div class="data-title">${trans.affectedKPIs}</div>
+                    `;
+                    
+                    data.kpis.forEach(kpi => {
+                        const statusClass = kpi.status || '';
+                        dataPanelHTML += `
+                            <div class="data-item">
+                                <span class="data-label">${kpi.label}:</span>
+                                <span class="data-value ${statusClass}">${kpi.value}</span>
+                            </div>
+                        `;
+                    });
+                    
+                    dataPanelHTML += '</div>';
+                    
+                    // Add critical event if exists
+                    if (data.event) {
+                        dataPanelHTML += `
+                            <div class="critical-event">
+                                <div class="event-time">⚠️ ${data.event.time}</div>
+                                <div class="event-desc">${data.event.desc}</div>
+                            </div>
+                        `;
+                    }
+                    
+                    html += `
+                        <div class="station">
+                            <div class="data-panel">
+                                ${dataPanelHTML}
+                            </div>
+                            <div class="station-box">
+                                <div class="station-status ${station.status === 'warning' ? 'warning' : station.status === 'error' ? 'error' : ''}"></div>
+                                <div class="station-icon">${station.icon}</div>
+                                <div class="station-name" data-station-index="${index}">Station</div>
+                                <div class="station-protocol">${station.protocol}</div>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                container.innerHTML = html;
+                this.updateStationNames();
+            },
+
+            // Update station names
+            updateStationNames() {
+                const names = this.translations[this.config.currentLang].stations;
+                
+                document.querySelectorAll('[data-station-index]').forEach(element => {
+                    const index = element.getAttribute('data-station-index');
+                    element.textContent = names[index];
+                });
+            },
+
+            // Render defect heatmap
+            renderDefectHeatmap() {
+                const container = document.getElementById('heatmapGrid');
+                const defects = ['pinhole', 'glaze', 'banding', 'black', 'ghosting', 'edge', 'crack', 'pattern'];
+                const values = [0.8, 1.2, 0.5, 0.4, 0.2, 2.1, 0.1, 0.3];
+                
+                container.innerHTML = defects.map((defect, index) => {
+                    const value = values[index];
+                    const colorClass = value < 1 ? 'defect-low' : value < 2 ? 'defect-medium' : 'defect-high';
+                    
+                    return `
+                        <div class="defect-item">
+                            <div class="defect-name" data-defect-key="${defect}">Defect</div>
+                            <div class="defect-value ${colorClass}" id="defect-${defect}">${value}%</div>
+                        </div>
+                    `;
+                }).join('');
+            },
+
+            // Update defect names
+            updateDefectNames() {
+                const trans = this.translations[this.config.currentLang].defects;
+                
+                document.querySelectorAll('[data-defect-key]').forEach(element => {
+                    const key = element.getAttribute('data-defect-key');
+                    if (trans[key]) {
+                        element.textContent = trans[key];
+                    }
+                });
+            },
+
+            // Render control panel
+            renderControlPanel() {
+                const container = document.getElementById('controlButtons');
+                const controls = [
+                    { id: 'dataFlow', primary: true, action: 'startDataFlow' },
+                    { id: 'tilePassport', action: 'showTilePassport' },
+                    { id: 'aiPlaybook', action: 'showAIPlaybook' },
+                    { id: 'criticalEvent', action: 'simulateCriticalEvent' },
+                    { id: 'heatmapUpdate', action: 'updateDefectHeatmap' },
+                    { id: 'cta', primary: true, action: 'openCTA' }
+                ];
+                
+                container.innerHTML = controls.map(control => `
+                    <button class="control-btn ${control.primary ? 'primary' : ''}" 
+                            data-control-key="${control.id}" 
+                            data-action="${control.action}">
+                        Button Text
+                    </button>
+                `).join('');
+                
+                // Add event listeners
+                container.querySelectorAll('[data-action]').forEach(button => {
+                    const action = button.getAttribute('data-action');
+                    button.addEventListener('click', () => this[action]());
+                });
+            },
+
+            // Update control button texts
+            updateControlButtons() {
+                const trans = this.translations[this.config.currentLang].controls;
+                
+                document.querySelectorAll('[data-control-key]').forEach(element => {
+                    const key = element.getAttribute('data-control-key');
+                    if (key === 'dataFlow') {
+                        element.textContent = this.config.isDataFlowing ? trans.dataFlowStop : trans.dataFlow;
+                    } else if (trans[key]) {
+                        element.textContent = trans[key];
+                    }
+                });
+            },
+
+            // Update tile info display
+            updateTileInfo() {
+                const stationNames = this.translations[this.config.currentLang].stations;
+                
+                document.getElementById('tileId').textContent = this.config.currentTile.id;
+                document.getElementById('tileLot').textContent = this.config.currentTile.lot;
+                document.getElementById('tileOrder').textContent = this.config.currentTile.order;
+                document.getElementById('tileRecipe').textContent = this.config.currentTile.recipe;
+                document.getElementById('tileLocation').textContent = stationNames[this.config.tilePosition];
+                
+                // Update progress
+                const progress = ((this.config.tilePosition + 1) / 7) * 100;
+                document.getElementById('progressFill').style.width = progress + '%';
+                document.getElementById('progressText').textContent = `${this.config.tilePosition + 1}/7`;
+            },
+
+            // Start/stop data flow
+            startDataFlow() {
+                if (this.config.isDataFlowing) {
+                    clearInterval(this.config.dataFlowInterval);
+                    this.config.isDataFlowing = false;
+                } else {
+                    this.config.isDataFlowing = true;
+                    this.config.dataFlowInterval = setInterval(() => {
+                        this.updateRealtimeData();
+                        this.animateTileMovement();
+                    }, 2000);
+                }
+                
+                this.updateControlButtons();
+            },
+
+            // Update realtime data
+            updateRealtimeData() {
+                // Update KPIs with random values
+                document.getElementById('oee-value').innerHTML = (82 + Math.random() * 12).toFixed(1) + '<span class="kpi-unit">%</span>';
+                document.getElementById('ftq-value').innerHTML = (88 + Math.random() * 8).toFixed(1) + '<span class="kpi-unit">%</span>';
+                document.getElementById('scrap-value').innerHTML = (2 + Math.random() * 3).toFixed(1) + '<span class="kpi-unit">%</span>';
+                document.getElementById('energy-value').innerHTML = (20 + Math.random() * 8).toFixed(1) + '<span class="kpi-unit">kWh/m²</span>';
+                document.getElementById('co2-value').innerHTML = (10 + Math.random() * 5).toFixed(1) + '<span class="kpi-unit">kg/m²</span>';
+                document.getElementById('delta-e-value').innerHTML = (1.5 + Math.random() * 0.8).toFixed(1) + '<span class="kpi-unit"></span>';
+            },
+
+            // Animate tile movement
+            animateTileMovement() {
+                const stations = document.querySelectorAll('.station-box');
+                
+                // Clear current position
+                stations.forEach(station => {
+                    station.style.boxShadow = '';
+                });
+                
+                // New position
+                this.config.tilePosition = (this.config.tilePosition + 1) % stations.length;
+                stations[this.config.tilePosition].style.boxShadow = '0 0 40px rgba(0,212,255,0.8)';
+                
+                // Update tile passport display
+                this.updateTileInfo();
+                
+                setTimeout(() => {
+                    stations[this.config.tilePosition].style.boxShadow = '';
+                }, 1500);
+            },
+
+            // Make control panel draggable
+            makeControlPanelDraggable() {
+                const panel = document.querySelector('.control-panel');
+                const title = document.querySelector('.control-title');
+                let isDragging = false;
+                let startX = 0;
+                let startY = 0;
+                let startLeft = 0;
+                let startTop = 0;
+
+                // Toggle collapse on title click
+                title.addEventListener('click', (e) => {
+                    if (!isDragging && (e.target === title || e.target.closest('.collapse-icon'))) {
+                        panel.classList.toggle('collapsed');
+                    }
+                });
+
+                const dragStart = (e) => {
+                    if (e.target.closest('.control-title-text') || (e.target === title && !e.target.closest('.collapse-icon'))) {
+                        isDragging = true;
+                        panel.classList.add('dragging');
+                        
+                        startX = e.type === 'touchstart' ? e.touches[0].clientX : e.clientX;
+                        startY = e.type === 'touchstart' ? e.touches[0].clientY : e.clientY;
+                        
+                        const rect = panel.getBoundingClientRect();
+                        startLeft = rect.left;
+                        startTop = rect.top;
+                        
+                        panel.style.bottom = 'auto';
+                        panel.style.right = 'auto';
+                        panel.style.left = startLeft + 'px';
+                        panel.style.top = startTop + 'px';
+                        
+                        e.preventDefault();
+                    }
+                };
+
+                const drag = (e) => {
+                    if (!isDragging) return;
+                    
+                    e.preventDefault();
+                    
+                    const currentX = e.type === 'touchmove' ? e.touches[0].clientX : e.clientX;
+                    const currentY = e.type === 'touchmove' ? e.touches[0].clientY : e.clientY;
+                    
+                    const deltaX = currentX - startX;
+                    const deltaY = currentY - startY;
+                    
+                    let newLeft = startLeft + deltaX;
+                    let newTop = startTop + deltaY;
+                    
+                    const rect = panel.getBoundingClientRect();
+                    const maxX = window.innerWidth - rect.width;
+                    const maxY = window.innerHeight - rect.height;
+                    
+                    newLeft = Math.max(0, Math.min(newLeft, maxX));
+                    newTop = Math.max(0, Math.min(newTop, maxY));
+                    
+                    panel.style.left = newLeft + 'px';
+                    panel.style.top = newTop + 'px';
+                };
+
+                const dragEnd = () => {
+                    if (isDragging) {
+                        isDragging = false;
+                        panel.classList.remove('dragging');
+                    }
+                };
+
+                title.addEventListener('mousedown', dragStart);
+                title.addEventListener('touchstart', dragStart, { passive: false });
+                
+                document.addEventListener('mousemove', drag);
+                document.addEventListener('touchmove', drag, { passive: false });
+                
+                document.addEventListener('mouseup', dragEnd);
+                document.addEventListener('touchend', dragEnd);
+            },
+
+            // Make Tile Passport draggable
+            makeTilePassportDraggable() {
+                const panel = document.getElementById('tilePassportPanel');
+                const header = document.getElementById('tilePassportHeader');
+                let isDragging = false;
+                let startX = 0;
+                let startY = 0;
+                let startLeft = 0;
+                let startTop = 0;
+
+                const dragStart = (e) => {
+                    if (e.target === header || e.target.closest('.tile-passport-title')) {
+                        isDragging = true;
+                        panel.classList.add('dragging');
+                        
+                        startX = e.type === 'touchstart' ? e.touches[0].clientX : e.clientX;
+                        startY = e.type === 'touchstart' ? e.touches[0].clientY : e.clientY;
+                        
+                        const rect = panel.getBoundingClientRect();
+                        startLeft = rect.left;
+                        startTop = rect.top;
+                        
+                        e.preventDefault();
+                    }
+                };
+
+                const drag = (e) => {
+                    if (!isDragging) return;
+                    
+                    e.preventDefault();
+                    
+                    const currentX = e.type === 'touchmove' ? e.touches[0].clientX : e.clientX;
+                    const currentY = e.type === 'touchmove' ? e.touches[0].clientY : e.clientY;
+                    
+                    const deltaX = currentX - startX;
+                    const deltaY = currentY - startY;
+                    
+                    let newLeft = startLeft + deltaX;
+                    let newTop = startTop + deltaY;
+                    
+                    const rect = panel.getBoundingClientRect();
+                    const maxX = window.innerWidth - rect.width;
+                    const maxY = window.innerHeight - rect.height;
+                    
+                    newLeft = Math.max(0, Math.min(newLeft, maxX));
+                    newTop = Math.max(0, Math.min(newTop, maxY));
+                    
+                    panel.style.left = newLeft + 'px';
+                    panel.style.top = newTop + 'px';
+                };
+
+                const dragEnd = () => {
+                    if (isDragging) {
+                        isDragging = false;
+                        panel.classList.remove('dragging');
+                    }
+                };
+
+                header.addEventListener('mousedown', dragStart);
+                header.addEventListener('touchstart', dragStart, { passive: false });
+                document.addEventListener('mousemove', drag);
+                document.addEventListener('touchmove', drag, { passive: false });
+                document.addEventListener('mouseup', dragEnd);
+                document.addEventListener('touchend', dragEnd);
+            },
+
+            // Toggle Tile Passport minimize
+            toggleTilePassport() {
+                const panel = document.getElementById('tilePassportPanel');
+                const minimizeBtn = document.getElementById('minimizeTilePassport');
+                
+                panel.classList.toggle('minimized');
+                minimizeBtn.textContent = panel.classList.contains('minimized') ? '+' : '−';
+            },
+
+            // Show tile passport details
+            showTilePassport() {
+                alert('Tile Passport Details - ' + this.config.currentLang);
+            },
+
+            // Show AI Playbook
+            showAIPlaybook() {
+                const lang = this.config.currentLang;
+                const content = document.getElementById('playbookContent');
+                
+                // Playbook content for each language
+                const playbookData = {
+                    tr: {
+                        question: 'Soru: "Neden FTQ düştü?"',
+                        analysis: 'ArAI analiz sonuçları:',
+                        rootCause: 'Kök Neden:',
+                        rootCauseDesc: 'Fırın Zon-5\'te +18°C sapma tespit edildi (14:32). Bu durum siyah çekirdek ve pişme kusuru oranlarını artırıyor.',
+                        suggestedActions: 'Önerilen Aksiyonlar:',
+                        actions: [
+                            {
+                                title: '1. Acil Müdahale',
+                                desc: '🔧 Fırın Zon-5 gaz valfi kalibrasyonu',
+                                impact: '📊 Etki: FTQ +%2.1 beklenen iyileşme'
+                            },
+                            {
+                                title: '2. Hız Optimizasyonu',
+                                desc: '⚡ Konveyör hızını %3 azalt (1.8 → 1.75 m/dk)',
+                                impact: '📊 Etki: Pişme homojenliği +%1.5'
+                            },
+                            {
+                                title: '3. Preskriptif Bakım',
+                                desc: '🔄 Sır viskozite ayarı (45sn → 42sn)',
+                                impact: '📊 Etki: Glaze akması -%0.4'
+                            },
+                            {
+                                title: '4. Örnekleme Stratejisi',
+                                desc: '📈 CWF önerisi: Örnekleme sıklığını 1.5× artır',
+                                impact: '📊 Etki: Erken tespit oranı +%35'
+                            }
+                        ],
+                        mesIntegration: 'ArMES Entegrasyonu:',
+                        mesFeatures: [
+                            '✓ Parti ayırma otomatik uygulandı',
+                            '✓ Operatör bildirimi gönderildi',
+                            '✓ Kalite kontrol noktaları güncellendi'
+                        ]
+                    },
+                    en: {
+                        question: 'Question: "Why did FTQ drop?"',
+                        analysis: 'ArAI analysis results:',
+                        rootCause: 'Root Cause:',
+                        rootCauseDesc: '+18°C deviation detected in Kiln Zone-5 (14:32). This increases black core and firing defect rates.',
+                        suggestedActions: 'Suggested Actions:',
+                        actions: [
+                            {
+                                title: '1. Immediate Intervention',
+                                desc: '🔧 Kiln Zone-5 gas valve calibration',
+                                impact: '📊 Impact: FTQ +2.1% expected improvement'
+                            },
+                            {
+                                title: '2. Speed Optimization',
+                                desc: '⚡ Reduce conveyor speed by 3% (1.8 → 1.75 m/min)',
+                                impact: '📊 Impact: Firing homogeneity +1.5%'
+                            },
+                            {
+                                title: '3. Prescriptive Maintenance',
+                                desc: '🔄 Glaze viscosity adjustment (45s → 42s)',
+                                impact: '📊 Impact: Glaze flow -0.4%'
+                            },
+                            {
+                                title: '4. Sampling Strategy',
+                                desc: '📈 CWF suggestion: Increase sampling frequency 1.5×',
+                                impact: '📊 Impact: Early detection rate +35%'
+                            }
+                        ],
+                        mesIntegration: 'ArMES Integration:',
+                        mesFeatures: [
+                            '✓ Batch separation automatically applied',
+                            '✓ Operator notification sent',
+                            '✓ Quality control points updated'
+                        ]
+                    }
+                };
+                
+                const data = playbookData[lang];
+                
+                // Build playbook HTML
+                let html = `
+                    <h4 style="color: #00ff88; margin-bottom: 15px;">${data.question}</h4>
+                    
+                    <p style="margin-bottom: 15px;">${data.analysis}</p>
+                    
+                    <div style="background: rgba(255,68,68,0.1); padding: 10px; border-radius: 10px; margin-bottom: 15px; border: 1px solid rgba(255,68,68,0.3);">
+                        <strong style="color: #ff4444;">${data.rootCause}</strong><br>
+                        <span style="color: rgba(255,255,255,0.9);">${data.rootCauseDesc}</span>
+                    </div>
+                    
+                    <p style="margin-bottom: 10px; font-weight: bold;">${data.suggestedActions}</p>
+                `;
+                
+                // Add actions
+                data.actions.forEach((action, index) => {
+                    html += `
+                        <div class="playbook-action" onclick="App.applyAction(${index + 1})">
+                            <strong style="color: #00ff88;">${action.title}</strong><br>
+                            <span style="color: rgba(255,255,255,0.8);">${action.desc}</span><br>
+                            <span style="color: rgba(0,212,255,0.9); font-size: 11px;">${action.impact}</span>
+                        </div>
+                    `;
+                });
+                
+                // Add MES integration
+                html += `
+                    <div style="margin-top: 20px; padding: 10px; background: rgba(0,255,136,0.1); border-radius: 10px; border: 1px solid rgba(0,255,136,0.3);">
+                        <strong style="color: #00ff88;">${data.mesIntegration}</strong><br>
+                `;
+                
+                data.mesFeatures.forEach(feature => {
+                    html += `<span style="color: rgba(255,255,255,0.8);">${feature}</span><br>`;
+                });
+                
+                html += '</div>';
+                
+                // Set content and show panel
+                content.innerHTML = html;
+                document.getElementById('playbookPanel').classList.add('show');
+            },
+
+            // Apply playbook action
+            applyAction(actionId) {
+                const lang = this.config.currentLang;
+                
+                const messages = {
+                    tr: [
+                        '',
+                        '✅ Fırın Zon-5 kalibrasyon talimatı gönderildi',
+                        '✅ Konveyör hızı optimize edildi',
+                        '✅ Sır viskozite ayarı yapıldı',
+                        '✅ Örnekleme stratejisi güncellendi'
+                    ],
+                    en: [
+                        '',
+                        '✅ Kiln Zone-5 calibration instruction sent',
+                        '✅ Conveyor speed optimized',
+                        '✅ Glaze viscosity adjusted',
+                        '✅ Sampling strategy updated'
+                    ]
+                };
+                
+                const message = messages[lang][actionId];
+                if (message) {
+                    this.showNotification(message);
+                    
+                    // Simulate FTQ improvement
+                    setTimeout(() => {
+                        const currentFTQ = parseFloat(document.getElementById('ftq-value').textContent);
+                        const newFTQ = Math.min(99.9, currentFTQ + 2.1);
+                        document.getElementById('ftq-value').innerHTML = newFTQ.toFixed(1) + '<span class="kpi-unit">%</span>';
+                    }, 500);
+                    
+                    // Close playbook after action
+                    setTimeout(() => {
+                        this.closePlaybook();
+                    }, 2000);
+                }
+            },
+
+            // Close playbook
+            closePlaybook() {
+                document.getElementById('playbookPanel').classList.remove('show');
+            },
+
+            // Simulate critical event
+            simulateCriticalEvent() {
+                const lang = this.config.currentLang;
+                
+                // Critical events for each language
+                const events = {
+                    tr: [
+                        { station: 4, message: 'Fırın Zon-5 sıcaklık sapması (+18°C)', severity: 'error' },
+                        { station: 2, message: 'Sır viskozitesi hedef dışı', severity: 'warning' },
+                        { station: 3, message: 'Printhead nozzle tıkanıklığı', severity: 'warning' },
+                        { station: 0, message: 'Pres kalıp sensörü arızası', severity: 'error' },
+                        { station: 1, message: 'Kurutma nem seviyesi yüksek', severity: 'warning' },
+                        { station: 5, message: 'Vision sistem kalibrasyon hatası', severity: 'error' },
+                        { station: 6, message: 'Paketleme barkod okuyucu hatası', severity: 'warning' }
+                    ],
+                    en: [
+                        { station: 4, message: 'Kiln Zone-5 temperature deviation (+18°C)', severity: 'error' },
+                        { station: 2, message: 'Glaze viscosity out of target', severity: 'warning' },
+                        { station: 3, message: 'Printhead nozzle clogging', severity: 'warning' },
+                        { station: 0, message: 'Press mold sensor failure', severity: 'error' },
+                        { station: 1, message: 'Drying humidity level high', severity: 'warning' },
+                        { station: 5, message: 'Vision system calibration error', severity: 'error' },
+                        { station: 6, message: 'Packaging barcode reader error', severity: 'warning' }
+                    ]
+                };
+                
+                // Get random event for current language
+                const langEvents = events[lang];
+                const randomEvent = langEvents[Math.floor(Math.random() * langEvents.length)];
+                
+                // Get station elements
+                const stations = document.querySelectorAll('.station-status');
+                const stationBoxes = document.querySelectorAll('.station-box');
+                
+                // Clear any existing warnings/errors
+                stations.forEach((station, index) => {
+                    station.className = 'station-status';
+                    if (stationBoxes[index]) {
+                        stationBoxes[index].style.borderColor = '';
+                    }
+                });
+                
+                // Apply new critical event
+                if (stations[randomEvent.station]) {
+                    stations[randomEvent.station].className = 'station-status ' + randomEvent.severity;
+                    
+                    // Also highlight the station box
+                    if (stationBoxes[randomEvent.station]) {
+                        const borderColor = randomEvent.severity === 'error' ? '#ff4444' : '#ffaa00';
+                        stationBoxes[randomEvent.station].style.borderColor = borderColor;
+                        stationBoxes[randomEvent.station].style.boxShadow = `0 0 20px ${borderColor}`;
+                    }
+                }
+                
+                // Show notification with the event message
+                const criticalText = lang === 'tr' ? 'Kritik Olay' : 'Critical Event';
+                this.showNotification(`⚠️ ${criticalText}: ${randomEvent.message}`);
+                
+                // Clear the warning after 5 seconds
+                setTimeout(() => {
+                    if (stations[randomEvent.station]) {
+                        stations[randomEvent.station].className = 'station-status';
+                    }
+                    if (stationBoxes[randomEvent.station]) {
+                        stationBoxes[randomEvent.station].style.borderColor = '';
+                        stationBoxes[randomEvent.station].style.boxShadow = '';
+                    }
+                }, 5000);
+            },
+
+            // Update defect heatmap
+            updateDefectHeatmap() {
+                const defects = ['pinhole', 'glaze', 'banding', 'black', 'ghosting', 'edge', 'crack', 'pattern'];
+                
+                defects.forEach(defect => {
+                    const element = document.getElementById('defect-' + defect);
+                    const value = (Math.random() * 3).toFixed(1);
+                    element.textContent = value + '%';
+                    
+                    // Update color class
+                    element.className = 'defect-value';
+                    if (parseFloat(value) < 1) {
+                        element.classList.add('defect-low');
+                    } else if (parseFloat(value) < 2) {
+                        element.classList.add('defect-medium');
+                    } else {
+                        element.classList.add('defect-high');
+                    }
+                });
+                
+                const message = this.translations[this.config.currentLang].heatmapUpdated;
+                this.showNotification(message);
+            },
+
+            // Open CTA (Contact Form)
+            openCTA() {
+                const lang = this.config.currentLang;
+                const phoneInput = document.getElementById('phoneInput');
+                const noteInput = document.getElementById('noteInput');
+                
+                if (lang === 'en') {
+                    phoneInput.placeholder = '+90 5XX XXX XX XX';
+                    noteInput.placeholder = 'Briefly describe your needs...';
+                } else {
+                    phoneInput.placeholder = '+90 5XX XXX XX XX';
+                    noteInput.placeholder = 'İhtiyaçlarınızı kısaca yazın...';
+                }
+                
+                document.getElementById('contactFormPanel').classList.add('show');
+            },
+
+            // Close contact form
+            closeContactForm() {
+                document.getElementById('contactFormPanel').classList.remove('show');
+            },
+
+            // Setup contact form
+            setupContactForm() {
+                const form = document.getElementById('contactForm');
+                form.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    
+                    const phone = document.getElementById('phoneInput').value;
+                    const note = document.getElementById('noteInput').value;
+                    
+                    if (phone && note) {
+                        console.log('Form submitted:', { phone, note });
+                        
+                        const successMsg = this.translations[this.config.currentLang].successMessage;
+                        this.showNotification(successMsg);
+                        
+                        document.getElementById('phoneInput').value = '';
+                        document.getElementById('noteInput').value = '';
+                        
+                        this.closeContactForm();
+                    } else {
+                        const errorMsg = this.config.currentLang === 'tr' ? 
+                            '⚠️ Lütfen tüm alanları doldurun' : 
+                            '⚠️ Please fill all fields';
+                        this.showNotification(errorMsg);
+                    }
+                });
+            },
+
+            // Show notification
+            showNotification(message) {
+                const notification = document.createElement('div');
+                notification.style.cssText = `
+                    position: fixed;
+                    top: 20px;
+                    right: 20px;
+                    background: rgba(0,0,0,0.9);
+                    color: white;
+                    padding: 15px 20px;
+                    border-radius: 10px;
+                    border: 1px solid rgba(0,255,136,0.5);
+                    z-index: 3000;
+                    animation: slideIn 0.5s ease;
+                    max-width: 300px;
+                `;
+                notification.textContent = message;
+                document.body.appendChild(notification);
+                
+                setTimeout(() => {
+                    notification.style.animation = 'slideOut 0.5s ease';
+                    setTimeout(() => {
+                        document.body.removeChild(notification);
+                    }, 500);
+                }, 3000);
+            },
+
+            // Setup OEE click handler
+            setupOEEClick() {
+                // OEE Card
+                const oeeCard = document.getElementById('oee-card');
+                if (oeeCard) {
+                    oeeCard.addEventListener('click', () => this.showOEEAnalytics());
+                }
+                
+                // FTQ Card
+                const ftqCard = document.getElementById('ftq-card');
+                if (ftqCard) {
+                    ftqCard.addEventListener('click', () => this.showFTQAnalytics());
+                }
+                
+                // Scrap Card
+                const scrapCard = document.getElementById('scrap-card');
+                if (scrapCard) {
+                    scrapCard.addEventListener('click', () => this.showScrapAnalytics());
+                }
+                
+                // Energy Card
+                const energyCard = document.getElementById('energy-card');
+                if (energyCard) {
+                    energyCard.addEventListener('click', () => this.showEnergyAnalytics());
+                }
+                
+                // CO2 Card
+                const co2Card = document.getElementById('co2-card');
+                if (co2Card) {
+                    co2Card.addEventListener('click', () => this.showCO2Analytics());
+                }
+                
+                // Delta E Card
+                const deltaECard = document.getElementById('delta-e-card');
+                if (deltaECard) {
+                    deltaECard.addEventListener('click', () => this.showDeltaEAnalytics());
+                }
+            },
+
+            // Show OEE Analytics popup
+            showOEEAnalytics() {
+                const lang = this.config.currentLang;
+                const trans = this.translations[lang].oeeAnalytics;
+                
+                // Update labels
+                document.getElementById('oeeTitle').textContent = trans.title;
+                document.getElementById('availabilityLabel').textContent = trans.availability;
+                document.getElementById('performanceLabel').textContent = trans.performance;
+                document.getElementById('qualityLabel').textContent = trans.quality;
+                document.getElementById('hourlyTrendLabel').textContent = trans.hourlyTrend;
+                document.getElementById('stationBreakdownLabel').textContent = trans.stationBreakdown;
+                document.getElementById('lossAnalysisLabel').textContent = trans.lossAnalysis;
+                document.getElementById('exportButtonText').textContent = trans.exportButton;
+                
+                // Generate random but realistic OEE component values
+                const availability = (88 + Math.random() * 8).toFixed(1);
+                const performance = (92 + Math.random() * 7).toFixed(1);
+                const quality = (94 + Math.random() * 5).toFixed(1);
+                
+                document.getElementById('availabilityValue').textContent = availability + '%';
+                document.getElementById('performanceValue').textContent = performance + '%';
+                document.getElementById('qualityValue').textContent = quality + '%';
+                
+                // Draw OEE trend chart
+                this.drawOEEChart();
+                
+                // Generate station OEE bars
+                this.generateStationOEE(lang);
+                
+                // Generate loss breakdown
+                this.generateLossBreakdown(lang);
+                
+                // Show the panel
+                document.getElementById('oeePanel').classList.add('show');
+            },
+
+            // Draw OEE trend chart
+            drawOEEChart() {
+                const canvas = document.getElementById('oeeChart');
+                const ctx = canvas.getContext('2d');
+                
+                // Set canvas size
+                canvas.width = canvas.offsetWidth;
+                canvas.height = canvas.offsetHeight;
+                
+                // Generate hourly data points
+                const hours = ['06:00', '07:00', '08:00', '09:00', '10:00', '11:00', '12:00', '13:00'];
+                const oeeValues = hours.map(() => 75 + Math.random() * 20);
+                
+                // Chart dimensions
+                const padding = 40;
+                const chartWidth = canvas.width - padding * 2;
+                const chartHeight = canvas.height - padding * 2;
+                
+                // Clear canvas
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                // Draw grid lines
+                ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+                ctx.lineWidth = 1;
+                
+                // Horizontal grid lines
+                for (let i = 0; i <= 5; i++) {
+                    const y = padding + (chartHeight / 5) * i;
+                    ctx.beginPath();
+                    ctx.moveTo(padding, y);
+                    ctx.lineTo(padding + chartWidth, y);
+                    ctx.stroke();
+                    
+                    // Y-axis labels
+                    ctx.fillStyle = 'rgba(255,255,255,0.5)';
+                    ctx.font = '10px sans-serif';
+                    ctx.textAlign = 'right';
+                    const value = 100 - (i * 20);
+                    ctx.fillText(value + '%', padding - 10, y + 3);
+                }
+                
+                // Draw line chart
+                ctx.strokeStyle = '#00ff88';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                
+                hours.forEach((hour, index) => {
+                    const x = padding + (chartWidth / (hours.length - 1)) * index;
+                    const y = padding + chartHeight - (oeeValues[index] / 100) * chartHeight;
+                    
+                    if (index === 0) {
+                        ctx.moveTo(x, y);
+                    } else {
+                        ctx.lineTo(x, y);
+                    }
+                    
+                    // Draw point
+                    ctx.fillStyle = '#00ff88';
+                    ctx.beginPath();
+                    ctx.arc(x, y, 4, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    // X-axis labels
+                    ctx.fillStyle = 'rgba(255,255,255,0.5)';
+                    ctx.font = '10px sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(hour, x, canvas.height - 20);
+                    
+                    // Value labels
+                    ctx.fillStyle = '#00ff88';
+                    ctx.font = 'bold 11px sans-serif';
+                    ctx.fillText(oeeValues[index].toFixed(1) + '%', x, y - 10);
+                });
+                
+                ctx.stroke();
+                
+                // Draw target line at 85%
+                ctx.strokeStyle = 'rgba(255,170,0,0.5)';
+                ctx.lineWidth = 1;
+                ctx.setLineDash([5, 5]);
+                ctx.beginPath();
+                const targetY = padding + chartHeight - (85 / 100) * chartHeight;
+                ctx.moveTo(padding, targetY);
+                ctx.lineTo(padding + chartWidth, targetY);
+                ctx.stroke();
+                ctx.setLineDash([]);
+                
+                // Target label
+                ctx.fillStyle = 'rgba(255,170,0,0.8)';
+                ctx.font = '10px sans-serif';
+                ctx.textAlign = 'left';
+                ctx.fillText('Target: 85%', padding + chartWidth - 60, targetY - 5);
+            },
+
+            // Generate station OEE bars
+            generateStationOEE(lang) {
+                const container = document.getElementById('stationOEEBars');
+                const stations = this.translations[lang].stations;
+                
+                let html = '';
+                stations.forEach((station, index) => {
+                    const oeeValue = 75 + Math.random() * 20;
+                    const barColor = oeeValue >= 85 ? '#00ff88' : oeeValue >= 75 ? '#ffaa00' : '#ff4444';
+                    
+                    html += `
+                        <div style="margin-bottom: 10px;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                                <span style="font-size: 12px; color: rgba(255,255,255,0.7);">${station}</span>
+                                <span style="font-size: 12px; font-weight: bold; color: ${barColor};">${oeeValue.toFixed(1)}%</span>
+                            </div>
+                            <div style="height: 20px; background: rgba(255,255,255,0.1); border-radius: 10px; overflow: hidden;">
+                                <div style="height: 100%; width: ${oeeValue}%; background: linear-gradient(90deg, ${barColor}, ${barColor}aa); transition: width 1s ease; box-shadow: 0 0 10px ${barColor}80;"></div>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                container.innerHTML = html;
+            },
+
+            // Generate loss breakdown
+            generateLossBreakdown(lang) {
+                const container = document.getElementById('lossBreakdown');
+                const losses = this.translations[lang].oeeAnalytics.losses;
+                
+                const lossData = [
+                    { key: 'plannedMaintenance', value: 45, color: '#00ff88' },
+                    { key: 'unplannedDowntime', value: 120, color: '#ff4444' },
+                    { key: 'changeOver', value: 30, color: '#ffaa00' },
+                    { key: 'minorStops', value: 85, color: '#00d4ff' },
+                    { key: 'speedLoss', value: 60, color: '#ff00ff' },
+                    { key: 'qualityDefects', value: 40, color: '#ff4444' }
+                ];
+                
+                let html = '';
+                lossData.forEach(loss => {
+                    html += `
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px; background: rgba(255,255,255,0.05); border-radius: 5px; margin-bottom: 5px;">
+                            <span style="font-size: 12px; color: rgba(255,255,255,0.7);">${losses[loss.key]}</span>
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <div style="width: 60px; height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden;">
+                                    <div style="height: 100%; width: ${loss.value / 120 * 100}%; background: ${loss.color};"></div>
+                                </div>
+                                <span style="font-size: 12px; font-weight: bold; color: ${loss.color}; min-width: 45px; text-align: right;">${loss.value} min</span>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                container.innerHTML = html;
+            },
+
+            // Close OEE panel
+            closeOEE() {
+                document.getElementById('oeePanel').classList.remove('show');
+            },
+
+            // Export OEE report
+            exportOEEReport() {
+                const lang = this.config.currentLang;
+                const message = lang === 'tr' ? 
+                    '📊 OEE raporu hazırlanıyor... (CSV/PDF formatında)' : 
+                    '📊 Preparing OEE report... (CSV/PDF format)';
+                this.showNotification(message);
+                
+                setTimeout(() => {
+                    const successMsg = lang === 'tr' ?
+                        '✅ Rapor başarıyla indirildi!' :
+                        '✅ Report downloaded successfully!';
+                    this.showNotification(successMsg);
+                    this.closeOEE();
+                }, 1500);
+            }
+        };
+
+        // Initialize when DOM is ready
+        document.addEventListener('DOMContentLoaded', () => {
+            App.init();
+        });
+    </script>
+</body>
+</html>
