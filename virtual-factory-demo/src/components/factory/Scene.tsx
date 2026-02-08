@@ -1,8 +1,7 @@
-import { Canvas, useFrame } from '@react-three/fiber';
-import { OrbitControls, Grid, PerspectiveCamera, Environment } from '@react-three/drei';
-import { useRef, useMemo } from 'react';
-import * as THREE from 'three';
+import { Canvas } from '@react-three/fiber';
+import { OrbitControls, Grid, PerspectiveCamera, Environment, Text } from '@react-three/drei';
 import { useFactoryStore } from '../../store/factoryStore';
+import { ConveyorBelt } from './ConveyorBelt';
 
 // Simple Station Component
 const Station = ({ position, color, label, isActive }: { position: [number, number, number], color: string, label: string, isActive: boolean }) => {
@@ -33,49 +32,28 @@ const Station = ({ position, color, label, isActive }: { position: [number, numb
                 <sphereGeometry args={[0.2, 16, 16]} />
                 <meshBasicMaterial color={isActive ? "#00ff88" : "#ff4444"} />
             </mesh>
+
+            {/* Station Label */}
+            <Text
+                position={[0, 4, 0]}
+                fontSize={0.5}
+                color="white"
+                anchorX="center"
+                anchorY="middle"
+                outlineWidth={0.02}
+                outlineColor="#000000"
+            >
+                {label}
+            </Text>
         </group>
     );
 };
 
-// Moving Tile Component
-const MovingTile = () => {
-    const { tilePosition, isDataFlowing } = useFactoryStore();
-    const tileRef = useRef<THREE.Group>(null);
 
-    // Station positions (aligned with the stations in Scene)
-    const stationPositions = useMemo(() => {
-        return Array.from({ length: 7 }).map((_, i) => [(i - 3) * 4, 1.2, 0] as [number, number, number]);
-    }, []);
-
-    useFrame((state, delta) => {
-        if (!tileRef.current) return;
-
-        const targetPos = stationPositions[tilePosition];
-
-        // Simple lerp for smooth movement
-        tileRef.current.position.x = THREE.MathUtils.lerp(tileRef.current.position.x, targetPos[0], delta * 2);
-        tileRef.current.position.y = THREE.MathUtils.lerp(tileRef.current.position.y, targetPos[1], delta * 2);
-        tileRef.current.position.z = THREE.MathUtils.lerp(tileRef.current.position.z, targetPos[2], delta * 2);
-
-        // Rotate tile
-        if (isDataFlowing) {
-            tileRef.current.rotation.y += delta;
-        }
-    });
-
-    return (
-        <group ref={tileRef}>
-            <mesh castShadow>
-                <boxGeometry args={[0.8, 0.1, 0.8]} />
-                <meshStandardMaterial color="#fff" roughness={0.4} />
-            </mesh>
-        </group>
-    );
-};
 
 // Main Scene Component
 export const Scene = () => {
-    const { stations, tilePosition } = useFactoryStore();
+    const { stations, tilePosition } = useFactoryStore((state) => state);
 
     // Colors for different station types
     const stationColors = [
@@ -139,14 +117,8 @@ export const Scene = () => {
                 />
             ))}
 
-            {/* Moving Tile */}
-            <MovingTile />
-
-            {/* Connection Lines (Conveyor) */}
-            <mesh position={[0, 0.1, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
-                <planeGeometry args={[28, 1]} />
-                <meshStandardMaterial color="#111" />
-            </mesh>
+            {/* Conveyor Belt System */}
+            <ConveyorBelt />
 
         </Canvas>
     );

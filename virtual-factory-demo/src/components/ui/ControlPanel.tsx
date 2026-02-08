@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useFactoryStore } from '../../store/factoryStore';
 
 export const ControlPanel = () => {
-    const { isDataFlowing, toggleDataFlow, setModal, currentLang } = useFactoryStore();
+    const { isDataFlowing, toggleDataFlow, setModal, currentLang, conveyorSpeed, setConveyorSpeed, conveyorStatus, setConveyorStatus } = useFactoryStore();
     const [collapsed, setCollapsed] = useState(false);
     const [position, setPosition] = useState({ x: window.innerWidth - 220, y: window.innerHeight - 300 });
     const isDragging = useRef(false);
@@ -80,8 +80,8 @@ export const ControlPanel = () => {
                 <button
                     onClick={toggleDataFlow}
                     className={`w-full py-2.5 px-3 rounded-lg text-xs font-semibold text-white flex items-center justify-center gap-2 transition-all duration-300 ${isDataFlowing
-                            ? 'bg-gradient-to-r from-[#00d4ff]/30 to-[#00d4ff]/20 border border-[#00d4ff]/50 shadow-[0_0_15px_rgba(0,212,255,0.3)]'
-                            : 'bg-white/5 border border-white/10 hover:bg-white/10'
+                        ? 'bg-gradient-to-r from-[#00d4ff]/30 to-[#00d4ff]/20 border border-[#00d4ff]/50 shadow-[0_0_15px_rgba(0,212,255,0.3)]'
+                        : 'bg-white/5 border border-white/10 hover:bg-white/10'
                         }`}
                 >
                     {isDataFlowing ? t('stop') : t('start')}
@@ -121,6 +121,41 @@ export const ControlPanel = () => {
                 >
                     {t('cta')}
                 </button>
+
+                <div className="h-px bg-white/10 my-2" />
+
+                {/* Conveyor Controls */}
+                <div className="space-y-2">
+                    <div className="flex justify-between items-center text-xs text-white/80">
+                        <span>Conveyor Speed: {conveyorSpeed}x</span>
+                    </div>
+                    <input
+                        type="range"
+                        min="0"
+                        max="5"
+                        step="0.1"
+                        value={conveyorSpeed}
+                        onChange={(e) => setConveyorSpeed(parseFloat(e.target.value))}
+                        className="w-full h-1 bg-white/20 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:bg-[#00ff88] [&::-webkit-slider-thumb]:rounded-full hover:[&::-webkit-slider-thumb]:scale-125 transition-all"
+                    />
+
+                    <div className="grid grid-cols-3 gap-1">
+                        {(['running', 'stopped', 'jammed'] as const).map((status) => (
+                            <button
+                                key={status}
+                                onClick={() => setConveyorStatus(status)}
+                                className={`text-[10px] py-1 rounded border transition-colors ${conveyorStatus === status
+                                    ? status === 'running' ? 'bg-green-500/20 border-green-500 text-green-400'
+                                        : status === 'stopped' ? 'bg-gray-500/20 border-gray-500 text-gray-400'
+                                            : 'bg-red-500/20 border-red-500 text-red-400'
+                                    : 'bg-white/5 border-white/10 text-white/40 hover:bg-white/10'
+                                    }`}
+                            >
+                                {status.toUpperCase()}
+                            </button>
+                        ))}
+                    </div>
+                </div>
             </div>
         </div>
     );

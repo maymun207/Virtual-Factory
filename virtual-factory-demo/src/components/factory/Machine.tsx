@@ -4,9 +4,11 @@ import { useBox } from '@react-three/cannon';
 import { useFactoryStore } from '../../store/factoryStore';
 
 export const Machine = () => {
-    const { isRunning, rpm } = useFactoryStore();
+    const { isDataFlowing } = useFactoryStore((state) => state);
+    const isRunning = isDataFlowing;
+    const rpm = 120;
     const [ref] = useBox(() => ({ mass: 1, position: [0, 2, 0] }));
-    const armRef = useRef<any>();
+    const armRef = useRef<any>(null);
 
     useFrame((state, delta) => {
         if (isRunning && armRef.current) {

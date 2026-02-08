@@ -51,6 +51,12 @@ interface FactoryState {
     toggleDataFlow: () => void;
     setModal: (modalId: string | null) => void;
     updateSimulation: () => void;
+
+    // Conveyor State
+    conveyorSpeed: number;
+    conveyorStatus: 'running' | 'stopped' | 'jammed';
+    setConveyorSpeed: (speed: number) => void;
+    setConveyorStatus: (status: 'running' | 'stopped' | 'jammed') => void;
 }
 
 const INITIAL_STATIONS: StationData[] = [
@@ -190,4 +196,10 @@ export const useFactoryStore = create<FactoryState>((set) => ({
             defects: newDefects
         };
     }),
+
+    // Conveyor State
+    conveyorSpeed: 1,
+    conveyorStatus: 'running',
+    setConveyorSpeed: (speed: number) => set({ conveyorSpeed: speed }),
+    setConveyorStatus: (status: 'running' | 'stopped' | 'jammed') => set({ conveyorStatus: status }),
 }));
