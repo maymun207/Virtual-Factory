@@ -4,7 +4,7 @@ import { useFactoryStore } from '../../store/factoryStore';
 export const ControlPanel = () => {
     const { isDataFlowing, toggleDataFlow, setModal, currentLang, conveyorSpeed, setConveyorSpeed, conveyorStatus, setConveyorStatus } = useFactoryStore();
     const [collapsed, setCollapsed] = useState(false);
-    const [position, setPosition] = useState({ x: window.innerWidth - 220, y: window.innerHeight - 300 });
+    const [position, setPosition] = useState({ x: window.innerWidth - 300, y: window.innerHeight - 400 });
     const isDragging = useRef(false);
     const dragOffset = useRef({ x: 0, y: 0 });
 
@@ -32,9 +32,6 @@ export const ControlPanel = () => {
 
         window.addEventListener('mousemove', handleMouseMove);
         window.addEventListener('mouseup', handleMouseUp);
-
-        // Initial position
-        setPosition({ x: window.innerWidth - 270, y: window.innerHeight - 350 });
 
         return () => {
             window.removeEventListener('mousemove', handleMouseMove);

@@ -1,5 +1,6 @@
 import { useRef, useMemo, useState } from 'react';
 import { useFrame } from '@react-three/fiber';
+import { Text } from '@react-three/drei';
 import * as THREE from 'three';
 import { useFactoryStore } from '../../store/factoryStore';
 
@@ -11,24 +12,17 @@ interface PartProps {
     status: 'running' | 'stopped' | 'jammed';
 }
 
-function Part({ curve, speed, status, progress, onDestroy }: PartProps & { progress: number, onDestroy: () => void }) {
+function Part({ curve, speed, status, progress, label, onDestroy }: PartProps & { progress: number, label: string | number, onDestroy: () => void }) {
     const meshRef = useRef<THREE.Group>(null);
     const [t, setT] = useState(progress);
 
     useFrame((_, delta) => {
         if (status !== 'running') return;
 
-        // Move along curve - use a slower speed factor relative to the slats
-        // The curve length is approx 30-40 units. Speed 1 should mean roughly 1 unit/sec?
-        // Let's tune it. 
-        // Curve goes -15 to 15 (30 units) + return path. Total ~60 units.
-        // moving 0.05 per frame -> 0.05 * 60 = 3 units/sec at 60fps? No.
-        // delta is seconds. speed is unit/sec if we use length.
-
-        // Let's say speed 1 = 1/20 of the loop per second.
+        // Move along curve - using same logic as previous code
         const newT = t + (delta * speed * 0.05);
 
-        if (newT >= 0.5) { // Assuming 0.5 is the end of the top run (approx)
+        if (newT >= 0.5) { // assuming 0.5 is the end of the top run
             onDestroy();
         } else {
             setT(newT);
@@ -39,7 +33,7 @@ function Part({ curve, speed, status, progress, onDestroy }: PartProps & { progr
             const tangent = curve.getTangentAt(t);
             // Adjust tangent for orientation
             meshRef.current.position.copy(point);
-            meshRef.current.position.y += 0.06; // Sit on top of slats (slat height 0.05 + base 0.025 + tile half 0.025 ≈ 0.06)
+            meshRef.current.position.y += 0.07; // Sit on top of slats (adjusted for larger tile)
             // Look along path
             const lookAtPos = point.clone().add(tangent);
             meshRef.current.lookAt(lookAtPos);
@@ -49,9 +43,21 @@ function Part({ curve, speed, status, progress, onDestroy }: PartProps & { progr
     return (
         <group ref={meshRef}>
             <mesh castShadow receiveShadow>
-                <boxGeometry args={[0.72, 0.05, 0.72]} />
+                <boxGeometry args={[0.9, 0.0625, 0.9]} />
                 <meshStandardMaterial color="#e5e7eb" roughness={0.3} metalness={0.1} />
             </mesh>
+            <Text
+                position={[0, 0.04, 0]} // Slightly above the surface
+                rotation={[-Math.PI / 2, 0, -Math.PI / 2]} // Rotated 180 degrees from previous 
+                // Actually if the box looks along the path (Z axis), and we want text to be readable...
+                // Let's try standard flat orientation.
+                fontSize={0.4}
+                color="black"
+                anchorX="center"
+                anchorY="middle"
+            >
+                {label}
+            </Text>
         </group>
     );
 }
@@ -59,13 +65,15 @@ function Part({ curve, speed, status, progress, onDestroy }: PartProps & { progr
 function PartSpawner({ curve, speed, status }: PartProps) {
     const [parts, setParts] = useState<{ id: number, progress: number }[]>([]);
     const lastSpawnTime = useRef(0);
+    const partCounter = useRef(1); // Start counting from 1
 
     useFrame(({ clock }) => {
         if (status !== 'running') return;
 
         const time = clock.elapsedTime;
         if (time - lastSpawnTime.current > 3) {
-            setParts(prev => [...prev, { id: Date.now(), progress: 0 }]); // Start at beginning of curve
+            const newId = partCounter.current++;
+            setParts(prev => [...prev, { id: newId, progress: 0 }]);
             lastSpawnTime.current = time;
         }
     });
@@ -83,6 +91,7 @@ function PartSpawner({ curve, speed, status }: PartProps) {
                     speed={speed}
                     status={status}
                     progress={part.progress}
+                    label={part.id}
                     onDestroy={() => removePart(part.id)}
                 />
             ))}

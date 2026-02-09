@@ -1,4 +1,6 @@
 import { create } from 'zustand';
+import { supabase } from '../lib/supabaseClient';
+
 
 export type Language = 'tr' | 'en';
 
@@ -57,7 +59,13 @@ interface FactoryState {
     conveyorStatus: 'running' | 'stopped' | 'jammed';
     setConveyorSpeed: (speed: number) => void;
     setConveyorStatus: (status: 'running' | 'stopped' | 'jammed') => void;
+
+    // Telemetry
+    telemetryInterval: ReturnType<typeof setInterval> | null;
+    startTelemetrySync: () => void;
+    stopTelemetrySync: () => void;
 }
+
 
 const INITIAL_STATIONS: StationData[] = [
     {
@@ -202,4 +210,57 @@ export const useFactoryStore = create<FactoryState>((set) => ({
     conveyorStatus: 'running',
     setConveyorSpeed: (speed: number) => set({ conveyorSpeed: speed }),
     setConveyorStatus: (status: 'running' | 'stopped' | 'jammed') => set({ conveyorStatus: status }),
+
+    // Telemetry
+    telemetryInterval: null,
+    startTelemetrySync: () => {
+        const interval = setInterval(async () => {
+            const state = useFactoryStore.getState();
+            if (!state.isDataFlowing) return;
+
+            const statsPayload: { machine_id: string; metric_name: string; value: number }[] = [];
+
+            // Collect Station Stats
+            state.stations.forEach(station => {
+                station.stats.forEach(stat => {
+                    statsPayload.push({
+                        machine_id: station.id,
+                        metric_name: stat.label.en, // Use English label as metric name key
+                        value: parseFloat(stat.value) || 0
+                    });
+                });
+            });
+
+            // Collect KPIs
+            state.kpis.forEach(kpi => {
+                statsPayload.push({
+                    machine_id: 'factory', // Use 'factory' for global KPIs
+                    metric_name: kpi.id,
+                    value: parseFloat(kpi.value) || 0
+                });
+            });
+
+            if (statsPayload.length > 0) {
+                const { error } = await supabase
+                    .from('factory_stats')
+                    .insert(statsPayload);
+
+                if (error) {
+                    console.error('Error syncing telemetry:', error);
+                }
+            }
+
+        }, 5000);
+
+        set({ telemetryInterval: interval });
+    },
+    stopTelemetrySync: () => {
+        set((state) => {
+            if (state.telemetryInterval) {
+                clearInterval(state.telemetryInterval);
+            }
+            return { telemetryInterval: null };
+        });
+    }
 }));
+

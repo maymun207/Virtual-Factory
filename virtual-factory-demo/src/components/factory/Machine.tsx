@@ -2,13 +2,14 @@ import { useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { useBox } from '@react-three/cannon';
 import { useFactoryStore } from '../../store/factoryStore';
+import { Group, Mesh } from 'three';
 
 export const Machine = () => {
     const { isDataFlowing } = useFactoryStore((state) => state);
     const isRunning = isDataFlowing;
     const rpm = 120;
-    const [ref] = useBox(() => ({ mass: 1, position: [0, 2, 0] }));
-    const armRef = useRef<any>(null);
+    const [ref] = useBox(() => ({ mass: 1, position: [0, 2, 0] }), useRef<Mesh>(null));
+    const armRef = useRef<Group>(null);
 
     useFrame((state, delta) => {
         if (isRunning && armRef.current) {
@@ -21,7 +22,7 @@ export const Machine = () => {
     return (
         <group>
             {/* Base Machine */}
-            <mesh ref={ref as any} castShadow receiveShadow>
+            <mesh ref={ref as React.RefObject<Mesh>} castShadow receiveShadow>
                 <boxGeometry args={[2, 2, 2]} />
                 <meshStandardMaterial color={isRunning ? "#10b981" : "#ef4444"} emissive={isRunning ? "#10b981" : "#000000"} emissiveIntensity={0.5} />
             </mesh>

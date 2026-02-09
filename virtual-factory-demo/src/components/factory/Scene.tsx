@@ -3,8 +3,9 @@ import { OrbitControls, Grid, PerspectiveCamera, Environment, Text } from '@reac
 import { useFactoryStore } from '../../store/factoryStore';
 import { ConveyorBelt } from './ConveyorBelt';
 
+
 // Simple Station Component
-const Station = ({ position, color, label, isActive }: { position: [number, number, number], color: string, label: string, isActive: boolean }) => {
+const Station = ({ position, color, label, isActive, children, renderDefault = true }: { position: [number, number, number], color: string, label: string, isActive: boolean, children?: React.ReactNode, renderDefault?: boolean }) => {
     return (
         <group position={position}>
             {/* Base */}
@@ -13,25 +14,28 @@ const Station = ({ position, color, label, isActive }: { position: [number, numb
                 <meshStandardMaterial color="#333" roughness={0.5} metalness={0.8} />
             </mesh>
 
-            {/* Machine Body */}
-            <mesh position={[0, 1.5, 0]} castShadow receiveShadow>
-                <boxGeometry args={[1.8, 1, 1.8]} />
-                <meshStandardMaterial
-                    color={isActive ? color : '#555'}
-                    emissive={isActive ? color : '#000'}
-                    emissiveIntensity={isActive ? 0.5 : 0}
-                    roughness={0.2}
-                    metalness={0.8}
-                    transparent
-                    opacity={0.9}
-                />
-            </mesh>
+            {/* Machine Body & Status Light (Default Only) */}
+            {renderDefault && (
+                <>
+                    <mesh position={[0, 1.5, 0]} castShadow receiveShadow>
+                        <boxGeometry args={[1.8, 1, 1.8]} />
+                        <meshStandardMaterial
+                            color={isActive ? color : '#555'}
+                            emissive={isActive ? color : '#000'}
+                            emissiveIntensity={isActive ? 0.5 : 0}
+                            roughness={0.2}
+                            metalness={0.8}
+                            transparent
+                            opacity={0.9}
+                        />
+                    </mesh>
 
-            {/* Status Light */}
-            <mesh position={[0, 2.5, 0]}>
-                <sphereGeometry args={[0.2, 16, 16]} />
-                <meshBasicMaterial color={isActive ? "#00ff88" : "#ff4444"} />
-            </mesh>
+                    <mesh position={[0, 2.5, 0]}>
+                        <sphereGeometry args={[0.2, 16, 16]} />
+                        <meshBasicMaterial color={isActive ? "#00ff88" : "#ff4444"} />
+                    </mesh>
+                </>
+            )}
 
             {/* Station Label */}
             <Text
@@ -45,6 +49,9 @@ const Station = ({ position, color, label, isActive }: { position: [number, numb
             >
                 {label}
             </Text>
+
+            {/* Custom Model Content */}
+            {children}
         </group>
     );
 };
@@ -58,7 +65,7 @@ export const Scene = () => {
     // Colors for different station types
     const stationColors = [
         '#00ff88', // Press
-        '#ffaa00', // Drying
+        '#0077ff', // Drying
         '#00d4ff', // Glaze
         '#ff00ff', // Print
         '#ff4444', // Kiln
@@ -68,7 +75,7 @@ export const Scene = () => {
 
     return (
         <Canvas shadows className="w-full h-full bg-black">
-            <PerspectiveCamera makeDefault position={[0, 8, 15]} fov={50} />
+            <PerspectiveCamera makeDefault position={[0, 5, 20]} fov={50} />
             <OrbitControls
                 enablePan={true}
                 enableZoom={true}
@@ -107,15 +114,17 @@ export const Scene = () => {
             />
 
             {/* Stations */}
-            {stations.map((station, index) => (
-                <Station
-                    key={station.id}
-                    position={[(index - 3) * 4, 0, 0]}
-                    color={stationColors[index]}
-                    label={station.name.en}
-                    isActive={tilePosition === index}
-                />
-            ))}
+            {stations.map((station, index) => {
+                return (
+                    <Station
+                        key={station.id}
+                        position={[(index - 3) * 4, 0, 0]}
+                        color={stationColors[index]}
+                        label={station.name.en}
+                        isActive={tilePosition === index}
+                    />
+                );
+            })}
 
             {/* Conveyor Belt System */}
             <ConveyorBelt />

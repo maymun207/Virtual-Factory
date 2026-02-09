@@ -2,9 +2,19 @@ import { Scene } from './components/factory/Scene';
 import { Dashboard } from './components/ui/Dashboard';
 import { useSensorSimulation } from './hooks/useSensorSimulation';
 
+import { useEffect } from 'react';
+import { useFactoryStore } from './store/factoryStore';
+
 function App() {
   // Start background simulation
   useSensorSimulation();
+
+  // Start telemetry sync
+  useEffect(() => {
+    const { startTelemetrySync, stopTelemetrySync } = useFactoryStore.getState();
+    startTelemetrySync();
+    return () => stopTelemetrySync();
+  }, []);
 
   return (
     <div className="relative w-screen h-screen overflow-hidden bg-black">
