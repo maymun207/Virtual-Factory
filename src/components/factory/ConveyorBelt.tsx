@@ -32,7 +32,7 @@ function Part({
   const [sortProgress, setSortProgress] = useState(0);
   const [originalPos, setOriginalPos] = useState(new THREE.Vector3());
 
-  useFrame((state, delta) => {
+  useFrame((_, delta) => {
     if (status !== "running" && !isSorted) return;
 
     // Animate scale (spawn effect)
