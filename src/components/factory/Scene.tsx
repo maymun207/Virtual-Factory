@@ -88,7 +88,7 @@ const TrashBin = ({ position }: { position: [number, number, number] }) => (
     <Text
       position={[0, 1.2, 0]}
       fontSize={0.4}
-      color="#aa00ff"
+      color="#f9a8d4"
       anchorX="center"
       anchorY="middle"
       outlineWidth={0.02}

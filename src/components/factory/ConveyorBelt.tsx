@@ -120,7 +120,7 @@ function Part({
       <mesh castShadow receiveShadow>
         <boxGeometry args={[0.9, 0.0625, 0.9]} />
         <meshStandardMaterial
-          color={isDefected ? "#d8b4fe" : "#e5e7eb"}
+          color={isDefected ? "#f9a8d4" : "#e5e7eb"}
           roughness={0.3}
           metalness={0.1}
         />
