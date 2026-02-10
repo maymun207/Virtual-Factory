@@ -248,11 +248,11 @@ export const useFactoryStore = create<FactoryState>((set) => ({
                 });
             });
 
-            if (statsPayload.length > 0) {
+            if (statsPayload.length > 0 && supabase) {
                 const { error } = await supabase
                     .from('factory_stats')
                     .insert(statsPayload);
-
+ 
                 if (error) {
                     console.error('Error syncing telemetry:', error);
                 }
