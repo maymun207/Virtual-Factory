@@ -77,10 +77,14 @@ function Part({
     const newT = t + delta * speed * 0.05;
 
     // Defect Introduction Logic (Randomly mark as defect at specific stages)
-    // Drying: 0.125, Glaze: 0.1875, Print: 0.25, Kiln: 0.3125
+    // Press: 0.0625, Drying: 0.125, Glaze: 0.1875, Print: 0.25, Kiln: 0.3125
     if (!isDefected) {
-      const stages = [0.125, 0.1875, 0.25, 0.3125];
+      const stages = [0.0625, 0.125, 0.1875, 0.25, 0.3125];
       for (const stage of stages) {
+        // Handle the initial spawn case (Press) specifically
+        if (t === 0.0625 && stage === 0.0625) {
+          if (Math.random() < 0.15) setIsDefected(true);
+        }
         if (t < stage && newT >= stage) {
           if (Math.random() < 0.15) {
             // 15% defect rate per machine
