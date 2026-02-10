@@ -14,21 +14,21 @@ export const Header = () => {
                 <p className="text-white/70 text-sm">{t.subtitle[currentLang]}</p>
             </div>
 
-            <div className="flex gap-2 bg-white/10 rounded-full p-1 border border-white/20">
+            <div className="flex gap-1 bg-white/5 rounded-full p-0.5 border border-white/10 relative -top-[30px]">
                 <button
                     onClick={() => setLanguage('tr')}
-                    className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ${currentLang === 'tr'
-                        ? 'bg-gradient-to-br from-[#00ff88]/30 to-[#00ff88]/20 text-white shadow-[0_2px_10px_rgba(0,255,136,0.3)]'
-                        : 'text-white/70 hover:bg-white/10'
+                    className={`px-2 py-0.5 rounded-full text-[10px] font-bold transition-all duration-300 ${currentLang === 'tr'
+                        ? 'bg-gradient-to-br from-[#00ff88]/40 to-[#00ff88]/20 text-white shadow-[0_1px_5px_rgba(0,255,136,0.2)]'
+                        : 'text-white/50 hover:bg-white/5 hover:text-white'
                         }`}
                 >
                     TR 🇹🇷
                 </button>
                 <button
                     onClick={() => setLanguage('en')}
-                    className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ${currentLang === 'en'
-                        ? 'bg-gradient-to-br from-[#00ff88]/30 to-[#00ff88]/20 text-white shadow-[0_2px_10px_rgba(0,255,136,0.3)]'
-                        : 'text-white/70 hover:bg-white/10'
+                    className={`px-2 py-0.5 rounded-full text-[10px] font-bold transition-all duration-300 ${currentLang === 'en'
+                        ? 'bg-gradient-to-br from-[#00ff88]/40 to-[#00ff88]/20 text-white shadow-[0_1px_5px_rgba(0,255,136,0.2)]'
+                        : 'text-white/50 hover:bg-white/5 hover:text-white'
                         }`}
                 >
                     EN 🇬🇧

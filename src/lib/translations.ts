@@ -52,5 +52,8 @@ export const translations = {
     },
     defects: {
         heatmapTitle: { tr: 'FTQ & Defekt Isı Haritası', en: 'FTQ & Defect Heatmap' }
+    },
+    kpiPane: {
+        title: { tr: '📊 Anahtar Performans Göstergeleri', en: '📊 Key Performance Indicators' }
     }
 };

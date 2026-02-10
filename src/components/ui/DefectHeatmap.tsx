@@ -1,35 +1,97 @@
-import { useFactoryStore } from '../../store/factoryStore';
-import { translations } from '../../lib/translations';
+import { useState, useRef, useEffect } from "react";
+import { useFactoryStore } from "../../store/factoryStore";
+import { translations } from "../../lib/translations";
 
 export const DefectHeatmap = () => {
-    const { defects, currentLang } = useFactoryStore();
-    const t = translations.defects;
+  const { defects, currentLang } = useFactoryStore();
+  const [collapsed, setCollapsed] = useState(true);
+  const [position, setPosition] = useState({ x: 960, y: 20 });
+  const isDragging = useRef(false);
+  const dragOffset = useRef({ x: 0, y: 0 });
 
-    return (
-        <div className="bg-black/80 backdrop-blur-md border border-white/10 rounded-xl p-4 w-full max-w-sm pointer-events-auto">
-            <h3 className="text-sm font-bold text-white/90 mb-3 flex items-center gap-2">
-                <span className="text-lg">🔥</span>
-                {t.heatmapTitle[currentLang]}
-            </h3>
+  const handleMouseDown = (e: React.MouseEvent) => {
+    isDragging.current = true;
+    dragOffset.current = {
+      x: e.clientX - position.x,
+      y: window.innerHeight - e.clientY - position.y,
+    };
+  };
 
-            <div className="grid grid-cols-4 gap-2">
-                {defects.map((defect) => {
-                    let colorClass = 'text-[#00ff88]';
-                    if (defect.value >= 2) colorClass = 'text-[#ff4444]';
-                    else if (defect.value >= 1) colorClass = 'text-[#ffaa00]';
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (isDragging.current) {
+        setPosition({
+          x: e.clientX - dragOffset.current.x,
+          y: window.innerHeight - e.clientY - dragOffset.current.y,
+        });
+      }
+    };
 
-                    return (
-                        <div key={defect.name} className="bg-white/5 rounded-lg p-2 flex flex-col items-center justify-center text-center border border-white/5 hover:border-white/20 transition-all">
-                            <span className="text-[9px] text-white/50 mb-1 leading-tight h-6 flex items-center justify-center w-full overflow-hidden text-ellipsis">
-                                {defect.label[currentLang]}
-                            </span>
-                            <span className={`text-sm font-bold ${colorClass}`}>
-                                {defect.value}%
-                            </span>
-                        </div>
-                    );
-                })}
-            </div>
+    const handleMouseUp = () => {
+      isDragging.current = false;
+    };
+
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, []);
+
+  const t = translations.defects;
+
+  return (
+    <div
+      style={{ left: position.x, bottom: position.y }}
+      className={`fixed z-30 bg-black/80 backdrop-blur-xl border-2 border-[#00ff88] rounded-2xl shadow-[0_0_20px_rgba(0,255,136,0.4)] transition-all duration-300 flex flex-col-reverse w-80`}
+    >
+      {/* Horizontal Header / Toggle Side */}
+      <div
+        onMouseDown={handleMouseDown}
+        className={`flex justify-between items-center cursor-move select-none transition-all ${collapsed ? "px-4 py-3" : "p-4 bg-[#00ff88]/10 border-t border-[#00ff88]/30 rounded-b-2xl"}`}
+      >
+        <span className="text-[#00ff88] font-bold text-base whitespace-nowrap tracking-wide flex items-center gap-2">
+          <span className="text-xl">🔥</span>
+          {t.heatmapTitle[currentLang]}
+        </span>
+        <button
+          onClick={() => setCollapsed(!collapsed)}
+          className="bg-white/10 hover:bg-[#00ff88]/20 text-white/80 hover:text-[#00ff88] w-7 h-7 rounded-lg flex items-center justify-center transition-all ml-4"
+        >
+          {collapsed ? "+" : "−"}
+        </button>
+      </div>
+
+      {/* Content Side */}
+      {!collapsed && (
+        <div className="p-5">
+          <div className="grid grid-cols-2 gap-3">
+            {defects.map((defect) => {
+              let colorClass = "text-[#00ff88]";
+              if (defect.value >= 2) colorClass = "text-[#ff4444]";
+              else if (defect.value >= 1) colorClass = "text-[#ffaa00]";
+
+              return (
+                <div
+                  key={defect.name}
+                  className="bg-white/5 rounded-xl p-3 flex flex-col items-center justify-center text-center border border-[#00ff88]/10 hover:border-[#00ff88]/30 transition-all hover:bg-[#00ff88]/5"
+                >
+                  <span className="text-[10px] text-white/50 mb-1 leading-tight h-6 flex items-center justify-center w-full font-bold uppercase tracking-wider">
+                    {defect.label[currentLang]}
+                  </span>
+                  <span
+                    className={`text-xl font-bold ${colorClass} drop-shadow-[0_0_8px_rgba(0,0,0,0.5)]`}
+                  >
+                    {defect.value}%
+                  </span>
+                </div>
+              );
+            })}
+          </div>
         </div>
-    );
+      )}
+    </div>
+  );
 };
