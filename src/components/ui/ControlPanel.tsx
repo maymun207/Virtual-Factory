@@ -132,7 +132,7 @@ export const ControlPanel = () => {
             <div className="py-3 px-1">
               <input
                 type="range"
-                min="0"
+                min="0.3"
                 max="2"
                 step="0.1"
                 value={conveyorSpeed}
