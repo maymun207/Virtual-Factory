@@ -83,11 +83,11 @@ function Part({
       for (const stage of stages) {
         // Handle the initial spawn case (Press) specifically
         if (t === 0.0625 && stage === 0.0625) {
-          if (Math.random() < 0.15) setIsDefected(true);
+          if (Math.random() < 0.04) setIsDefected(true);
         }
         if (t < stage && newT >= stage) {
-          if (Math.random() < 0.15) {
-            // 15% defect rate per machine
+          if (Math.random() < 0.04) {
+            // 4% defect rate per machine (reduced for realism)
             setIsDefected(true);
           }
         }
