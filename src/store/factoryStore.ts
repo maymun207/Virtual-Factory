@@ -42,7 +42,9 @@ interface FactoryState {
     activeModal: string | null;
 
     // Simulation State
-    tilePosition: number; // 0 to 6 (7 stations)
+    tilePosition: number; 
+    partPositions: number[]; 
+    partPositionsRef: { current: number[] };
 
     // Data
     stations: StationData[];
@@ -54,12 +56,17 @@ interface FactoryState {
     toggleDataFlow: () => void;
     setModal: (modalId: string | null) => void;
     updateSimulation: () => void;
+    setPartPositions: (positions: number[]) => void;
 
     // Conveyor State
     conveyorSpeed: number;
     conveyorStatus: 'running' | 'stopped' | 'jammed';
+    activeParts: { id: number; t: number; isDefected: boolean; label: string | number }[];
     setConveyorSpeed: (speed: number) => void;
     setConveyorStatus: (status: 'running' | 'stopped' | 'jammed') => void;
+    addPart: (part: { id: number; t: number; isDefected: boolean; label: string | number }) => void;
+    updatePart: (id: number, t: number, isDefected?: boolean) => void;
+    removePart: (id: number) => void;
 
     // Telemetry
     telemetryInterval: ReturnType<typeof setInterval> | null;
@@ -179,6 +186,8 @@ export const useFactoryStore = create<FactoryState>((set) => ({
     isDataFlowing: false,
     activeModal: null,
     tilePosition: 0,
+    partPositions: [],
+    partPositionsRef: { current: [] },
     stations: INITIAL_STATIONS,
     kpis: INITIAL_KPIS,
     defects: INITIAL_DEFECTS,
@@ -186,6 +195,7 @@ export const useFactoryStore = create<FactoryState>((set) => ({
     setLanguage: (lang) => set({ currentLang: lang }),
     toggleDataFlow: () => set((state) => ({ isDataFlowing: !state.isDataFlowing })),
     setModal: (modalId) => set({ activeModal: modalId }),
+    setPartPositions: (positions) => set({ partPositions: positions }),
 
     updateSimulation: () => set((state) => {
         if (!state.isDataFlowing) return state;
@@ -216,8 +226,23 @@ export const useFactoryStore = create<FactoryState>((set) => ({
     // Conveyor State
     conveyorSpeed: 1,
     conveyorStatus: 'running',
+    activeParts: [],
     setConveyorSpeed: (speed: number) => set({ conveyorSpeed: speed }),
     setConveyorStatus: (status: 'running' | 'stopped' | 'jammed') => set({ conveyorStatus: status }),
+    
+    addPart: (part) => set((state) => ({ 
+        activeParts: [...state.activeParts, part] 
+    })),
+    
+    updatePart: (id, t, isDefected) => set((state) => ({
+        activeParts: state.activeParts.map(p => 
+            p.id === id ? { ...p, t, isDefected: isDefected ?? p.isDefected } : p
+        )
+    })),
+    
+    removePart: (id) => set((state) => ({
+        activeParts: state.activeParts.filter(p => p.id !== id)
+    })),
 
     // Telemetry
     telemetryInterval: null,
@@ -271,4 +296,3 @@ export const useFactoryStore = create<FactoryState>((set) => ({
         });
     }
 }));
-

@@ -1,28 +1,93 @@
-import { Canvas } from "@react-three/fiber";
+import { Suspense, useRef } from "react";
+import { Canvas, useFrame } from "@react-three/fiber";
 import {
   OrbitControls,
-  Grid,
   PerspectiveCamera,
+  Grid,
+  Html,
   Environment,
-  Text,
 } from "@react-three/drei";
+import * as THREE from "three";
 import { useFactoryStore } from "../../store/factoryStore";
 import { ConveyorBelt } from "./ConveyorBelt";
+
+// Physical Highlighting Logic for Station
+const StationBody = ({ index, color }: { index: number; color: string }) => {
+  const meshRef = useRef<THREE.Mesh>(null);
+  const lightRef = useRef<THREE.Mesh>(null);
+  const partPositionsRef = useFactoryStore((state) => state.partPositionsRef);
+
+  // Mapping of station indices to their curve progress positions (t)
+  const stationStages = [0.0625, 0.125, 0.1875, 0.25, 0.3125, 0.375, 0.4375];
+
+  // Track state in a ref for frame-to-frame stability
+  const activeRef = useRef(false);
+
+  useFrame(() => {
+    if (!partPositionsRef.current || !meshRef.current || !lightRef.current)
+      return;
+
+    // Proximity check (Tight threshold for better visual sync)
+    const isPhysicalActive = partPositionsRef.current.some(
+      (t) => Math.abs(t - stationStages[index]) < 0.018,
+    );
+
+    // Only update if state changed to save performance
+    if (isPhysicalActive !== activeRef.current) {
+      activeRef.current = isPhysicalActive;
+
+      const mat = meshRef.current.material as THREE.MeshStandardMaterial;
+      const lightMat = lightRef.current.material as THREE.MeshBasicMaterial;
+
+      if (isPhysicalActive) {
+        mat.color.set(color);
+        mat.emissive.set(color);
+        mat.emissiveIntensity = 0.8;
+        lightMat.color.set("#00ff88");
+      } else {
+        mat.color.set("#0a0a0a");
+        mat.emissive.set("#000000");
+        mat.emissiveIntensity = 0;
+        lightMat.color.set("#330000");
+      }
+    }
+  });
+
+  return (
+    <>
+      <mesh ref={meshRef} position={[0, 1.5, 0]} castShadow receiveShadow>
+        <boxGeometry args={[1.8, 1, 1.8]} />
+        <meshStandardMaterial
+          color="#0a0a0a"
+          emissive="#000000"
+          emissiveIntensity={0}
+          roughness={0.1}
+          metalness={0.9}
+          transparent
+          opacity={0.95}
+        />
+      </mesh>
+
+      <mesh ref={lightRef} position={[0, 2.5, 0]}>
+        <sphereGeometry args={[0.2, 16, 16]} />
+        <meshBasicMaterial color="#330000" />
+      </mesh>
+    </>
+  );
+};
 
 // Simple Station Component
 const Station = ({
   position,
   color,
   label,
-  isActive,
-  children,
+  index,
   renderDefault = true,
 }: {
   position: [number, number, number];
   color: string;
   label: string;
-  isActive: boolean;
-  children?: React.ReactNode;
+  index: number;
   renderDefault?: boolean;
 }) => {
   return (
@@ -33,135 +98,118 @@ const Station = ({
         <meshStandardMaterial color="#333" roughness={0.5} metalness={0.8} />
       </mesh>
 
-      {/* Machine Body & Status Light (Default Only) */}
-      {renderDefault && (
-        <>
-          <mesh position={[0, 1.5, 0]} castShadow receiveShadow>
-            <boxGeometry args={[1.8, 1, 1.8]} />
-            <meshStandardMaterial
-              color={isActive ? color : "#555"}
-              emissive={isActive ? color : "#000"}
-              emissiveIntensity={isActive ? 0.5 : 0}
-              roughness={0.2}
-              metalness={0.8}
-              transparent
-              opacity={0.9}
-            />
-          </mesh>
-
-          <mesh position={[0, 2.5, 0]}>
-            <sphereGeometry args={[0.2, 16, 16]} />
-            <meshBasicMaterial color={isActive ? "#00ff88" : "#ff4444"} />
-          </mesh>
-        </>
-      )}
+      {/* Reactive Body & Status Light */}
+      {renderDefault && <StationBody index={index} color={color} />}
 
       {/* Station Label */}
-      <Text
+      <Html
         position={[0, 4, 0]}
-        fontSize={0.5}
-        color="white"
-        anchorX="center"
-        anchorY="middle"
-        outlineWidth={0.02}
-        outlineColor="#000000"
+        center
+        distanceFactor={10}
+        style={{
+          color: "white",
+          fontSize: "30px",
+          fontWeight: "black",
+          whiteSpace: "nowrap",
+          textShadow: "0 0 10px rgba(0,0,0,0.9)",
+          pointerEvents: "none",
+        }}
       >
         {label}
-      </Text>
-
-      {/* Custom Model Content */}
-      {children}
+      </Html>
     </group>
   );
 };
 
 const TrashBin = ({ position }: { position: [number, number, number] }) => (
   <group position={position}>
-    <mesh position={[0, 0.4, 0]}>
-      <boxGeometry args={[1.5, 0.8, 1.5]} />
-      <meshStandardMaterial color="#222" metalness={0.5} roughness={0.8} />
+    <mesh castShadow receiveShadow>
+      <boxGeometry args={[2, 1.5, 2]} />
+      <meshStandardMaterial color="#222" metalness={0.6} roughness={0.4} />
+      {/* Open top effect */}
+      <mesh position={[0, 0.76, 0]}>
+        <boxGeometry args={[1.8, 0.01, 1.8]} />
+        <meshStandardMaterial color="#000" />
+      </mesh>
     </mesh>
-    <mesh position={[0, -0.05, 0]}>
-      <boxGeometry args={[1.6, 0.1, 1.6]} />
-      <meshStandardMaterial color="#111" />
-    </mesh>
-    <Text
+    <Html
       position={[0, 1.2, 0]}
-      fontSize={0.4}
-      color="#f9a8d4"
-      anchorX="center"
-      anchorY="middle"
-      outlineWidth={0.02}
-      outlineColor="#000"
+      center
+      distanceFactor={10}
+      style={{
+        color: "#f9a8d4",
+        fontSize: "20px",
+        fontWeight: "bold",
+        whiteSpace: "nowrap",
+        textShadow: "0 0 10px rgba(0,0,0,0.9)",
+        pointerEvents: "none",
+      }}
     >
       REJECTS
-    </Text>
+    </Html>
   </group>
 );
 
-// Main Scene Component
 export const Scene = () => {
-  const { stations, tilePosition } = useFactoryStore((state) => state);
+  const stations = useFactoryStore((state) => state.stations);
 
   return (
     <Canvas shadows className="w-full h-full bg-black">
-      <PerspectiveCamera makeDefault position={[0, 5, 20]} fov={50} />
-      <OrbitControls
-        enablePan={true}
-        enableZoom={true}
-        enableRotate={true}
-        minPolarAngle={0}
-        maxPolarAngle={Math.PI / 2.2}
-        maxDistance={30}
-      />
+      <Suspense fallback={null}>
+        <PerspectiveCamera makeDefault position={[20, 15, 20]} fov={40} />
+        <OrbitControls
+          minPolarAngle={Math.PI / 6}
+          maxPolarAngle={Math.PI / 2.2}
+          enableDamping
+          dampingFactor={0.05}
+        />
 
-      {/* Lighting */}
-      <ambientLight intensity={0.5} />
-      <directionalLight
-        position={[10, 10, 5]}
-        intensity={1}
-        castShadow
-        shadow-mapSize={[2048, 2048]}
-      />
-      <pointLight position={[-10, 5, -5]} intensity={0.5} color="#00d4ff" />
+        {/* Lighting */}
+        <ambientLight intensity={0.4} />
+        <spotLight
+          position={[10, 20, 10]}
+          angle={0.15}
+          penumbra={1}
+          intensity={1.5}
+          castShadow
+          shadow-mapSize={[1024, 1024]}
+        />
+        <pointLight position={[-10, -10, -10]} intensity={0.5} />
+        <Environment preset="city" />
 
-      {/* Environment */}
-      <Environment preset="city" />
-      <fog attach="fog" args={["#050505", 10, 50]} />
+        {/* Floor */}
+        <Grid
+          infiniteGrid
+          followCamera
+          position={[0, -0.01, 0]}
+          cellSize={1}
+          cellThickness={0.5}
+          cellColor="#202020"
+          sectionSize={5}
+          sectionThickness={1}
+          sectionColor="#00ff88"
+          fadeDistance={30}
+          fadeStrength={1}
+        />
 
-      {/* Floor Grid */}
-      <Grid
-        position={[0, 0, 0]}
-        args={[60, 60]}
-        cellSize={1}
-        cellThickness={0.5}
-        cellColor="#202020"
-        sectionSize={5}
-        sectionThickness={1}
-        sectionColor="#00ff88"
-        fadeDistance={30}
-        fadeStrength={1}
-      />
-
-      {/* Stations */}
-      {stations.map((station, index) => {
-        return (
+        {/* Stations */}
+        {stations.map((station, index) => (
           <group key={station.id}>
             <Station
+              index={index}
               position={[(index - 3) * 4, 0, 0]}
               color={station.color}
               label={station.name.en}
-              isActive={tilePosition === index}
             />
             {station.id === "sorting" && (
               <TrashBin position={[(index - 3) * 4, 0, 2.5]} />
             )}
           </group>
-        );
-      })}
+        ))}
 
-      {/* Conveyor Belt System */}
-      <ConveyorBelt />
+        {/* Conveyor Belt System */}
+        <ConveyorBelt />
+      </Suspense>
     </Canvas>
   );
 };

@@ -11,7 +11,6 @@ export const translations = {
         playbook: { tr: '🤖 ArAI Playbook Önerisi', en: '🤖 ArAI Playbook Suggestion' },
         critical: { tr: '⚠️ Kritik Olay Simülasyonu', en: '⚠️ Critical Event Simulation' },
         heatmap: { tr: '🔥 Defekt Haritası Güncelle', en: '🔥 Update Defect Heatmap' },
-        cta: { tr: '📞 Sizi Arayalım', en: '📞 We Call You' },
         conveyorSpeed: { tr: 'Konveyör Hızı', en: 'Conveyor Speed' }
     },
     tilePassport: {

@@ -113,13 +113,6 @@ export const ControlPanel = () => {
             {t("heatmap")}
           </button>
 
-          <button
-            onClick={() => {}}
-            className="w-full py-2.5 px-3 mt-2 rounded-lg text-xs font-bold text-white bg-gradient-to-r from-[#00ff88]/80 to-[#00d4ff]/80 hover:from-[#00ff88] hover:to-[#00d4ff] shadow-lg hover:shadow-[#00ff88]/40 transition-all duration-300 transform hover:-translate-y-0.5"
-          >
-            {t("cta")}
-          </button>
-
           <div className="h-px bg-white/10 my-2" />
 
           {/* Conveyor Controls */}
