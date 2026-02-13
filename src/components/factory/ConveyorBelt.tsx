@@ -12,6 +12,8 @@ interface PartData {
   isDefected: boolean;
   isSorted: boolean;
   sortProgress: number;
+  isCollected: boolean;
+  collectProgress: number;
   originalPos: THREE.Vector3;
   scale: number;
 }
@@ -29,7 +31,7 @@ function Part({
     if (!meshRef.current) return;
 
     if (data.isSorted) {
-      // Throw animation logic
+      // Throw animation logic (defective → trash)
       const targetPos = new THREE.Vector3(8, -0.2, 2.5);
       const currentPos = new THREE.Vector3().lerpVectors(
         data.originalPos,
@@ -44,6 +46,26 @@ function Part({
       if (data.sortProgress > 0.8) {
         const s = 1 - (data.sortProgress - 0.8) * 5;
         meshRef.current.scale.set(s, s, s);
+      }
+    } else if (data.isCollected) {
+      // Drop animation (good tiles → shipment box)
+      const targetPos = new THREE.Vector3(16, 0.5, 0);
+      const currentPos = new THREE.Vector3().lerpVectors(
+        data.originalPos,
+        targetPos,
+        data.collectProgress,
+      );
+      const arc = Math.sin(data.collectProgress * Math.PI) * 0.8;
+      meshRef.current.position.copy(currentPos);
+      meshRef.current.position.y += arc;
+
+      if (data.collectProgress > 0.7) {
+        const s = 1 - (data.collectProgress - 0.7) * 3.33;
+        meshRef.current.scale.set(
+          Math.max(0, s),
+          Math.max(0, s),
+          Math.max(0, s),
+        );
       }
     } else {
       const point = curve.getPointAt(data.t);
@@ -72,7 +94,7 @@ function Part({
         distanceFactor={10}
         style={{
           color: "black",
-          fontSize: "20px",
+          fontSize: "32px",
           fontWeight: "black",
           pointerEvents: "none",
         }}
@@ -112,6 +134,8 @@ function PartSpawner({
         isDefected: Math.random() < 0.05,
         isSorted: false,
         sortProgress: 0,
+        isCollected: false,
+        collectProgress: 0,
         originalPos: new THREE.Vector3(),
         scale: 0,
       };
@@ -131,6 +155,14 @@ function PartSpawner({
             return { ...p, sortProgress: newSortProgress };
           }
 
+          if (p.isCollected) {
+            const newCollectProgress = Math.min(
+              1,
+              p.collectProgress + delta * speed * 0.6,
+            );
+            return { ...p, collectProgress: newCollectProgress };
+          }
+
           const newT = p.t + delta * speed * 0.05;
           const newScale = Math.min(1, p.scale + delta * 2);
 
@@ -146,9 +178,25 @@ function PartSpawner({
             };
           }
 
+          // Collection check (after packaging, at end of line)
+          if (!p.isDefected && newT >= 0.47 && !p.isCollected) {
+            const point = curve.getPointAt(Math.min(p.t, 0.49));
+            return {
+              ...p,
+              isCollected: true,
+              originalPos: point.clone(),
+              t: newT,
+              scale: newScale,
+            };
+          }
+
           return { ...p, t: newT, scale: newScale };
         })
-        .filter((p) => (p.isSorted ? p.sortProgress < 1 : p.t < 0.5));
+        .filter((p) => {
+          if (p.isSorted) return p.sortProgress < 1;
+          if (p.isCollected) return p.collectProgress < 1;
+          return p.t < 0.5;
+        });
 
       // Update physical ref for high-speed proximity checks (non-rendering store update)
       useFactoryStore.getState().partPositionsRef.current = nextParts

@@ -4,7 +4,7 @@ import {
   OrbitControls,
   PerspectiveCamera,
   Grid,
-  Html,
+  Text,
   Environment,
 } from "@react-three/drei";
 import * as THREE from "three";
@@ -101,22 +101,18 @@ const Station = ({
       {/* Reactive Body & Status Light */}
       {renderDefault && <StationBody index={index} color={color} />}
 
-      {/* Station Label */}
-      <Html
-        position={[0, 4, 0]}
-        center
-        distanceFactor={10}
-        style={{
-          color: "white",
-          fontSize: "30px",
-          fontWeight: "black",
-          whiteSpace: "nowrap",
-          textShadow: "0 0 10px rgba(0,0,0,0.9)",
-          pointerEvents: "none",
-        }}
+      {/* Station Label (3D Text) */}
+      <Text
+        position={[0, 3.2, 0]}
+        fontSize={0.45}
+        color="white"
+        anchorX="center"
+        anchorY="middle"
+        outlineWidth={0.02}
+        outlineColor="#000000"
       >
         {label}
-      </Html>
+      </Text>
     </group>
   );
 };
@@ -125,28 +121,67 @@ const TrashBin = ({ position }: { position: [number, number, number] }) => (
   <group position={position}>
     <mesh castShadow receiveShadow>
       <boxGeometry args={[2, 1.5, 2]} />
-      <meshStandardMaterial color="#222" metalness={0.6} roughness={0.4} />
+      <meshStandardMaterial color="#808080" metalness={0.6} roughness={0.4} />
       {/* Open top effect */}
       <mesh position={[0, 0.76, 0]}>
         <boxGeometry args={[1.8, 0.01, 1.8]} />
         <meshStandardMaterial color="#000" />
       </mesh>
     </mesh>
-    <Html
-      position={[0, 1.2, 0]}
-      center
-      distanceFactor={10}
-      style={{
-        color: "#f9a8d4",
-        fontSize: "20px",
-        fontWeight: "bold",
-        whiteSpace: "nowrap",
-        textShadow: "0 0 10px rgba(0,0,0,0.9)",
-        pointerEvents: "none",
-      }}
+    {/* Label on body (3D Text) */}
+    <Text
+      position={[0, 0.5, 1.02]}
+      fontSize={0.35}
+      color="#f9a8d4"
+      anchorX="center"
+      anchorY="middle"
+      outlineWidth={0.015}
+      outlineColor="#000000"
     >
-      REJECTS
-    </Html>
+      WASTE BIN
+    </Text>
+  </group>
+);
+
+const ShipmentBox = ({ position }: { position: [number, number, number] }) => (
+  <group position={position}>
+    {/* Box base */}
+    <mesh position={[0, 0.4, 0]} castShadow receiveShadow>
+      <boxGeometry args={[2.5, 0.1, 2.5]} />
+      <meshStandardMaterial color="#8B6914" roughness={0.8} metalness={0.1} />
+    </mesh>
+    {/* Back wall */}
+    <mesh position={[0, 1.0, -1.2]} castShadow receiveShadow>
+      <boxGeometry args={[2.5, 1.2, 0.1]} />
+      <meshStandardMaterial color="#A0782C" roughness={0.8} metalness={0.1} />
+    </mesh>
+    {/* Front wall (shorter for visibility) */}
+    <mesh position={[0, 0.65, 1.2]} castShadow receiveShadow>
+      <boxGeometry args={[2.5, 0.5, 0.1]} />
+      <meshStandardMaterial color="#A0782C" roughness={0.8} metalness={0.1} />
+    </mesh>
+    {/* Left wall */}
+    <mesh position={[-1.2, 1.0, 0]} castShadow receiveShadow>
+      <boxGeometry args={[0.1, 1.2, 2.5]} />
+      <meshStandardMaterial color="#96701E" roughness={0.8} metalness={0.1} />
+    </mesh>
+    {/* Right wall */}
+    <mesh position={[1.2, 1.0, 0]} castShadow receiveShadow>
+      <boxGeometry args={[0.1, 1.2, 2.5]} />
+      <meshStandardMaterial color="#96701E" roughness={0.8} metalness={0.1} />
+    </mesh>
+    {/* Label (3D Text) */}
+    <Text
+      position={[0, 2.2, 0]}
+      fontSize={0.4}
+      color="#fbbf24"
+      anchorX="center"
+      anchorY="middle"
+      outlineWidth={0.015}
+      outlineColor="#000000"
+    >
+      SHIPMENT
+    </Text>
   </group>
 );
 
@@ -160,6 +195,8 @@ export const Scene = () => {
         <OrbitControls
           minPolarAngle={Math.PI / 6}
           maxPolarAngle={Math.PI / 2.2}
+          minDistance={20}
+          maxDistance={50}
           enableDamping
           dampingFactor={0.05}
         />
@@ -209,6 +246,9 @@ export const Scene = () => {
 
         {/* Conveyor Belt System */}
         <ConveyorBelt />
+
+        {/* Shipment Box at end of line */}
+        <ShipmentBox position={[16, 0, 0]} />
       </Suspense>
     </Canvas>
   );
