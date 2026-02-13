@@ -1,6 +1,7 @@
 import { Scene } from "./components/factory/Scene";
 import { Dashboard } from "./components/ui/Dashboard";
 import { SimulationControls } from "./components/ui/SimulationControls";
+import { FactoryStatusTable } from "./components/ui/FactoryStatusTable";
 import { useSensorSimulation } from "./hooks/useSensorSimulation";
 
 import { useEffect } from "react";
@@ -31,6 +32,7 @@ function App() {
         <div className="pointer-events-auto">
           <Dashboard />
           <SimulationControls />
+          <FactoryStatusTable />
         </div>
       </div>
     </div>

@@ -49,6 +49,18 @@ interface FactoryState {
     partPositions: number[]; 
     partPositionsRef: { current: number[] };
 
+    // Timing Systems
+    sClockPeriod: number;
+    cFactor: number;
+    pFactor: number;
+    sClockCount: number;
+    pClockCount: number;
+    statusMatrix: (string | null)[][]; // 5 rows x 7 cols (history of steps)
+    
+    setSClockPeriod: (period: number) => void;
+    setCFactor: (factor: number) => void;
+    setPFactor: (factor: number) => void;
+
     // Data
     stations: StationData[];
     kpis: KPI[];
@@ -206,6 +218,18 @@ export const useFactoryStore = create<FactoryState>((set) => ({
     defects: INITIAL_DEFECTS,
     resetVersion: 0,
 
+    // Timing
+    sClockPeriod: 500,
+    cFactor: 2,
+    pFactor: 4, // Assuming press is slower than base Simulator clock
+    sClockCount: 0,
+    pClockCount: 0,
+    statusMatrix: Array(5).fill(null).map(() => Array(7).fill(null)),
+
+    setSClockPeriod: (period) => set({ sClockPeriod: period }),
+    setCFactor: (factor) => set({ cFactor: factor }),
+    setPFactor: (factor) => set({ pFactor: factor }),
+
     setLanguage: (lang) => set({ currentLang: lang }),
     toggleDataFlow: () => set((state) => ({ 
         isDataFlowing: !state.isDataFlowing,
@@ -221,26 +245,68 @@ export const useFactoryStore = create<FactoryState>((set) => ({
     updateSimulation: () => set((state) => {
         if (!state.isDataFlowing) return state;
 
-        // Move tile
-        const nextPos = (state.tilePosition + 1) % state.stations.length;
+        const nextSClockCount = state.sClockCount + 1;
+        let nextPClockCount = state.pClockCount;
+        let nextStatusMatrix = [...state.statusMatrix];
+        let nextActiveParts = [...state.activeParts];
 
-        // Randomize KPIs slightly
+        // 1. Check Press Clock (P_clk)
+        // If sClockCount is multiple of pFactor, a new tile is produced
+        const isPressTick = nextSClockCount % state.pFactor === 0;
+        if (isPressTick) {
+            nextPClockCount += 1;
+            const newPartId = nextPClockCount;
+            
+            // Add to active parts at start of conveyor (t=0)
+            nextActiveParts.push({
+                id: newPartId,
+                t: 0,
+                isDefected: Math.random() < 0.05,
+                label: `Tile #${newPartId}`
+            });
+
+            // Update Status Matrix (Shift history and add new row)
+            // Each row represents a "Press Event" snapshot
+            const currentStationOccupancy = state.stations.map((_station, sIdx) => {
+                // Find tile in this station's segment
+                // Total stations = 7. Assume each station covers 1/7th of conveyor (t from 0 to 1)
+                const segmentSize = 1 / 7;
+                const part = nextActiveParts.find(p => 
+                    p.t >= sIdx * segmentSize && p.t < (sIdx + 1) * segmentSize
+                );
+                return part ? `Tile #${part.id}` : null;
+            });
+
+            nextStatusMatrix = [currentStationOccupancy, ...nextStatusMatrix.slice(0, 4)];
+        }
+
+        // 2. Check Conveyor Clock (C_clk) - Movement
+        // Move parts regardless of C_clk threshold if we want smooth movement,
+        // but let's follow user's "every C_clk move 1000mm" logic.
+        // For visual smoothness in React, we might move a tiny bit every S_clk
+        // but the 'logic' step happens at C_clk multipliers.
+        const isConveyorTick = nextSClockCount % state.cFactor === 0;
+        if (isConveyorTick) {
+            // Move across stations
+            nextActiveParts = nextActiveParts.map(part => ({
+                ...part,
+                t: part.t + (1 / 7) // Move one station per C_clk tick for demonstration
+            })).filter(part => part.t <= 1); // Remove if off conveyor
+        }
+
+        // Randomize KPIs slightly (existing logic)
         const newKpis = state.kpis.map(kpi => {
             const val = parseFloat(kpi.value);
             const variation = (Math.random() - 0.5) * 0.5;
             return { ...kpi, value: (val + variation).toFixed(1) };
         });
 
-        // Randomize defects slightly
-        const newDefects = state.defects.map(d => ({
-            ...d,
-            value: Number(Math.max(0, parseFloat((d.value + (Math.random() - 0.5) * 0.2).toFixed(1))))
-        }));
-
         return {
-            tilePosition: nextPos,
-            kpis: newKpis as KPI[],
-            defects: newDefects
+            sClockCount: nextSClockCount,
+            pClockCount: nextPClockCount,
+            statusMatrix: nextStatusMatrix,
+            activeParts: nextActiveParts,
+            kpis: newKpis as KPI[]
         };
     }),
 
