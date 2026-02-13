@@ -5,7 +5,7 @@ import { translations } from "../../lib/translations";
 export const DefectHeatmap = () => {
   const { defects, currentLang, showHeatmap, toggleHeatmap } =
     useFactoryStore();
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed] = useState(false);
   const [position, setPosition] = useState({ x: 960, y: 120 });
   const [width, setWidth] = useState(320);
   const isDragging = useRef(false);

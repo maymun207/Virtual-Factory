@@ -5,7 +5,7 @@ import { translations } from "../../lib/translations";
 export const TilePassport = () => {
   const { currentLang, tilePosition, stations, showPassport, togglePassport } =
     useFactoryStore();
-  const [minimized, setMinimized] = useState(false);
+  const [minimized] = useState(false);
 
   const [position, setPosition] = useState({ x: 0, y: 100 });
   const [width, setWidth] = useState(320);
