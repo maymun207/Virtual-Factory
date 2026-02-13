@@ -14,6 +14,12 @@ export const ControlPanel = () => {
     setConveyorStatus,
     showControlPanel,
     toggleHeatmap,
+    sClockPeriod,
+    setSClockPeriod,
+    cFactor,
+    setCFactor,
+    pFactor,
+    setPFactor,
   } = useFactoryStore();
 
   const [position, setPosition] = useState({ x: 0, y: 120 });
@@ -109,6 +115,57 @@ export const ControlPanel = () => {
             value={conveyorSpeed}
             onChange={(e) => setConveyorSpeed(parseFloat(e.target.value))}
             className="w-full h-1.5 bg-white/20 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:bg-[#00ff88] [&::-webkit-slider-thumb]:rounded-full hover:[&::-webkit-slider-thumb]:scale-125 transition-all"
+          />
+        </div>
+
+        <div className="space-y-1">
+          <div className="flex justify-between items-center text-[10px] text-white/80 font-bold">
+            <span>
+              {t("s_clk")}: {sClockPeriod}ms
+            </span>
+          </div>
+          <input
+            type="range"
+            min="100"
+            max="2000"
+            step="100"
+            value={sClockPeriod}
+            onChange={(e) => setSClockPeriod(parseInt(e.target.value))}
+            className="w-full h-1.5 bg-white/20 rounded-lg appearance-none cursor-pointer accent-[#00ff88]"
+          />
+        </div>
+
+        <div className="space-y-1">
+          <div className="flex justify-between items-center text-[10px] text-white/80 font-bold">
+            <span>
+              {t("c_factor")}: {cFactor}
+            </span>
+          </div>
+          <input
+            type="range"
+            min="1"
+            max="20"
+            step="1"
+            value={cFactor}
+            onChange={(e) => setCFactor(parseInt(e.target.value))}
+            className="w-full h-1.5 bg-white/20 rounded-lg appearance-none cursor-pointer accent-[#00ff88]"
+          />
+        </div>
+
+        <div className="space-y-1">
+          <div className="flex justify-between items-center text-[10px] text-white/80 font-bold">
+            <span>
+              {t("p_factor")}: {pFactor}
+            </span>
+          </div>
+          <input
+            type="range"
+            min="1"
+            max="20"
+            step="1"
+            value={pFactor}
+            onChange={(e) => setPFactor(parseInt(e.target.value))}
+            className="w-full h-1.5 bg-white/20 rounded-lg appearance-none cursor-pointer accent-[#00ff88]"
           />
         </div>
 

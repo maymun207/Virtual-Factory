@@ -48,6 +48,12 @@ interface FactoryState {
     tilePosition: number; 
     partPositions: number[]; 
     partPositionsRef: { current: number[] };
+    sClockPeriod: number;
+    cFactor: number;
+    pFactor: number;
+    sClockCount: number;
+    pClockCount: number;
+    statusMatrix: (string | null)[][]; // 9 rows x 7 cols
 
     // Data
     stations: StationData[];
@@ -63,6 +69,9 @@ interface FactoryState {
     toggleControlPanel: () => void;
     updateSimulation: () => void;
     setPartPositions: (positions: number[]) => void;
+    setSClockPeriod: (period: number) => void;
+    setCFactor: (factor: number) => void;
+    setPFactor: (factor: number) => void;
 
     // Conveyor State
     conveyorSpeed: number;
@@ -205,6 +214,12 @@ export const useFactoryStore = create<FactoryState>((set) => ({
     kpis: INITIAL_KPIS,
     defects: INITIAL_DEFECTS,
     resetVersion: 0,
+    sClockPeriod: 500,
+    cFactor: 4,
+    pFactor: 4,
+    sClockCount: 0,
+    pClockCount: 0,
+    statusMatrix: Array(9).fill(null).map(() => Array(7).fill(null)),
 
     setLanguage: (lang) => set({ currentLang: lang }),
     toggleDataFlow: () => set((state) => ({ 
@@ -217,12 +232,49 @@ export const useFactoryStore = create<FactoryState>((set) => ({
     toggleControlPanel: () => set((state) => ({ showControlPanel: !state.showControlPanel })),
     
     setPartPositions: (positions) => set({ partPositions: positions }),
+    setSClockPeriod: (period) => set({ sClockPeriod: period }),
+    setCFactor: (factor) => set({ cFactor: factor }),
+    setPFactor: (factor) => set({ pFactor: factor }),
 
     updateSimulation: () => set((state) => {
         if (!state.isDataFlowing) return state;
 
-        // Move tile
-        const nextPos = (state.tilePosition + 1) % state.stations.length;
+        const nextSClockCount = state.sClockCount + 1;
+        let nextPClockCount = state.pClockCount;
+        let nextStatusMatrix = [...state.statusMatrix];
+        let nextActiveParts = [...state.activeParts];
+
+        // 1. Press Clock (P_clk) - Production
+        const isPressTick = nextSClockCount % state.pFactor === 0;
+        if (isPressTick) {
+            nextPClockCount += 1;
+            const newPart = {
+                id: nextPClockCount,
+                t: 0.0625, // First station: Press
+                isDefected: Math.random() < 0.05,
+                label: `Tile #${nextPClockCount}`
+            };
+            nextActiveParts = [newPart, ...nextActiveParts];
+
+            // Capture snapshot for matrix
+            const stationStages = [0.0625, 0.125, 0.1875, 0.25, 0.3125, 0.375, 0.4375];
+            const currentOccupancy = stationStages.map((stage) => {
+                const part = nextActiveParts.find(p => Math.abs(p.t - stage) < 0.02);
+                return part ? `Tile #${part.id}` : null;
+            });
+
+            // Shift history
+            nextStatusMatrix = [currentOccupancy, ...nextStatusMatrix.slice(0, 8)];
+        }
+
+        // 2. Conveyor Clock (C_clk) - Movement
+        const isConveyorTick = nextSClockCount % state.cFactor === 0;
+        if (isConveyorTick) {
+            const stationJump = 0.0625; // Distance to next station
+            nextActiveParts = nextActiveParts
+                .map(p => ({ ...p, t: p.t + stationJump }))
+                .filter(p => p.t <= 1);
+        }
 
         // Randomize KPIs slightly
         const newKpis = state.kpis.map(kpi => {
@@ -238,7 +290,10 @@ export const useFactoryStore = create<FactoryState>((set) => ({
         }));
 
         return {
-            tilePosition: nextPos,
+            sClockCount: nextSClockCount,
+            pClockCount: nextPClockCount,
+            statusMatrix: nextStatusMatrix,
+            activeParts: nextActiveParts,
             kpis: newKpis as KPI[],
             defects: newDefects
         };
@@ -325,6 +380,9 @@ export const useFactoryStore = create<FactoryState>((set) => ({
         tilePosition: 0,
         partPositions: [],
         partPositionsRef: { current: [] },
+        sClockCount: 0,
+        pClockCount: 0,
+        statusMatrix: Array(9).fill(null).map(() => Array(7).fill(null)),
         isDataFlowing: false,
         conveyorSpeed: 1,
         conveyorStatus: 'stopped',

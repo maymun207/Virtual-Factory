@@ -10,6 +10,7 @@ import {
 import * as THREE from "three";
 import { useFactoryStore } from "../../store/factoryStore";
 import { ConveyorBelt } from "./ConveyorBelt";
+import { ProductionTable3D } from "./ProductionTable3D";
 
 // Physical Highlighting Logic for Station
 const StationBody = ({ index, color }: { index: number; color: string }) => {
@@ -325,6 +326,9 @@ export const Scene = () => {
 
         {/* Shipment Box at end of line */}
         <ShipmentBox position={[16, 0, 0]} />
+
+        {/* 3D Status Table */}
+        <ProductionTable3D />
       </Suspense>
     </Canvas>
   );

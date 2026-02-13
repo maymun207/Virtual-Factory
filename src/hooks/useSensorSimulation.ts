@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 import { useFactoryStore } from '../store/factoryStore';
 
 export const useSensorSimulation = () => {
-    const { isDataFlowing, updateSimulation } = useFactoryStore();
+    const { isDataFlowing, updateSimulation, sClockPeriod } = useFactoryStore();
     const intervalRef = useRef<number | null>(null);
 
     useEffect(() => {
@@ -10,7 +10,7 @@ export const useSensorSimulation = () => {
             // Start simulation loop
             intervalRef.current = window.setInterval(() => {
                 updateSimulation();
-            }, 2000); // Update every 2 seconds (matches original demo speed)
+            }, sClockPeriod); // Use dynamic sClockPeriod
         } else {
             // Stop simulation
             if (intervalRef.current) {
@@ -24,5 +24,5 @@ export const useSensorSimulation = () => {
                 clearInterval(intervalRef.current);
             }
         };
-    }, [isDataFlowing, updateSimulation]);
+    }, [isDataFlowing, updateSimulation, sClockPeriod]);
 };
