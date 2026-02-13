@@ -1,6 +1,7 @@
 import { Header } from "./Header";
 import { TilePassport } from "./TilePassport";
 import { KPIContainer } from "./KPIContainer";
+import { BottomToolbar } from "./BottomToolbar";
 import { ControlPanel } from "./ControlPanel";
 import { Playbook } from "./Playbook";
 import { DefectHeatmap } from "./DefectHeatmap";
@@ -11,6 +12,7 @@ export const Dashboard = () => {
       <Header />
       <TilePassport />
       <KPIContainer />
+      <BottomToolbar />
       <ControlPanel />
       <Playbook />
 

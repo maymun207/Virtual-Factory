@@ -1,6 +1,6 @@
 import { useRef, useMemo, useState } from "react";
 import { useFrame } from "@react-three/fiber";
-import { Html } from "@react-three/drei";
+import { Text, Billboard } from "@react-three/drei";
 import * as THREE from "three";
 import { useFactoryStore } from "../../store/factoryStore";
 
@@ -32,7 +32,7 @@ function Part({
 
     if (data.isSorted) {
       // Throw animation logic (defective → trash)
-      const targetPos = new THREE.Vector3(8, -0.2, 2.5);
+      const targetPos = new THREE.Vector3(10, -0.2, -2.5);
       const currentPos = new THREE.Vector3().lerpVectors(
         data.originalPos,
         targetPos,
@@ -81,26 +81,25 @@ function Part({
   return (
     <group ref={meshRef}>
       <mesh castShadow receiveShadow>
-        <boxGeometry args={[0.9, 0.0625, 0.9]} />
+        <boxGeometry args={[1.035, 0.071875, 1.035]} />
         <meshStandardMaterial
           color={data.isDefected ? "#f9a8d4" : "#e5e7eb"}
           roughness={0.3}
           metalness={0.1}
         />
       </mesh>
-      <Html
-        position={[0, 0.08, 0]}
-        center
-        distanceFactor={10}
-        style={{
-          color: "black",
-          fontSize: "32px",
-          fontWeight: "black",
-          pointerEvents: "none",
-        }}
-      >
-        {data.id}
-      </Html>
+      <Billboard position={[0, 0.25, 0]}>
+        <Text
+          fontSize={0.3}
+          color="black"
+          anchorX="center"
+          anchorY="middle"
+          outlineWidth={0.01}
+          outlineColor="white"
+        >
+          {data.id}
+        </Text>
+      </Billboard>
     </group>
   );
 }

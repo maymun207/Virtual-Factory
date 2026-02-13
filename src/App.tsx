@@ -1,9 +1,10 @@
-import { Scene } from './components/factory/Scene';
-import { Dashboard } from './components/ui/Dashboard';
-import { useSensorSimulation } from './hooks/useSensorSimulation';
+import { Scene } from "./components/factory/Scene";
+import { Dashboard } from "./components/ui/Dashboard";
+import { SimulationControls } from "./components/ui/SimulationControls";
+import { useSensorSimulation } from "./hooks/useSensorSimulation";
 
-import { useEffect } from 'react';
-import { useFactoryStore } from './store/factoryStore';
+import { useEffect } from "react";
+import { useFactoryStore } from "./store/factoryStore";
 
 function App() {
   // Start background simulation
@@ -11,7 +12,8 @@ function App() {
 
   // Start telemetry sync
   useEffect(() => {
-    const { startTelemetrySync, stopTelemetrySync } = useFactoryStore.getState();
+    const { startTelemetrySync, stopTelemetrySync } =
+      useFactoryStore.getState();
     startTelemetrySync();
     return () => stopTelemetrySync();
   }, []);
@@ -28,6 +30,7 @@ function App() {
         {/* Enable pointer events only for interactive UI elements */}
         <div className="pointer-events-auto">
           <Dashboard />
+          <SimulationControls />
         </div>
       </div>
     </div>

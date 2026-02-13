@@ -40,6 +40,9 @@ interface FactoryState {
     currentLang: Language;
     isDataFlowing: boolean;
     activeModal: string | null;
+    showPassport: boolean;
+    showHeatmap: boolean;
+    showControlPanel: boolean;
 
     // Simulation State
     tilePosition: number; 
@@ -55,6 +58,9 @@ interface FactoryState {
     setLanguage: (lang: Language) => void;
     toggleDataFlow: () => void;
     setModal: (modalId: string | null) => void;
+    togglePassport: () => void;
+    toggleHeatmap: () => void;
+    toggleControlPanel: () => void;
     updateSimulation: () => void;
     setPartPositions: (positions: number[]) => void;
 
@@ -72,6 +78,10 @@ interface FactoryState {
     telemetryInterval: ReturnType<typeof setInterval> | null;
     startTelemetrySync: () => void;
     stopTelemetrySync: () => void;
+    
+    // Reset
+    resetVersion: number;
+    resetFactory: () => void;
 }
 
 
@@ -185,16 +195,27 @@ export const useFactoryStore = create<FactoryState>((set) => ({
     currentLang: 'tr',
     isDataFlowing: false,
     activeModal: null,
+    showPassport: false,
+    showHeatmap: false,
+    showControlPanel: false,
     tilePosition: 0,
     partPositions: [],
     partPositionsRef: { current: [] },
     stations: INITIAL_STATIONS,
     kpis: INITIAL_KPIS,
     defects: INITIAL_DEFECTS,
+    resetVersion: 0,
 
     setLanguage: (lang) => set({ currentLang: lang }),
-    toggleDataFlow: () => set((state) => ({ isDataFlowing: !state.isDataFlowing })),
+    toggleDataFlow: () => set((state) => ({ 
+        isDataFlowing: !state.isDataFlowing,
+        conveyorStatus: !state.isDataFlowing ? 'running' : 'stopped' 
+    })),
     setModal: (modalId) => set({ activeModal: modalId }),
+    togglePassport: () => set((state) => ({ showPassport: !state.showPassport })),
+    toggleHeatmap: () => set((state) => ({ showHeatmap: !state.showHeatmap })),
+    toggleControlPanel: () => set((state) => ({ showControlPanel: !state.showControlPanel })),
+    
     setPartPositions: (positions) => set({ partPositions: positions }),
 
     updateSimulation: () => set((state) => {
@@ -225,7 +246,7 @@ export const useFactoryStore = create<FactoryState>((set) => ({
 
     // Conveyor State
     conveyorSpeed: 1,
-    conveyorStatus: 'running',
+    conveyorStatus: 'stopped',
     activeParts: [],
     setConveyorSpeed: (speed: number) => set({ conveyorSpeed: speed }),
     setConveyorStatus: (status: 'running' | 'stopped' | 'jammed') => set({ conveyorStatus: status }),
@@ -294,5 +315,22 @@ export const useFactoryStore = create<FactoryState>((set) => ({
             }
             return { telemetryInterval: null };
         });
-    }
+    },
+
+    resetFactory: () => set((state) => ({
+        stations: INITIAL_STATIONS,
+        kpis: INITIAL_KPIS,
+        defects: INITIAL_DEFECTS,
+        activeParts: [],
+        tilePosition: 0,
+        partPositions: [],
+        partPositionsRef: { current: [] },
+        isDataFlowing: false,
+        conveyorSpeed: 1,
+        conveyorStatus: 'stopped',
+        resetVersion: state.resetVersion + 1,
+        showPassport: false,
+        showHeatmap: false,
+        showControlPanel: false
+    }))
 }));

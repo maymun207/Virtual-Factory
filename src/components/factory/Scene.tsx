@@ -120,22 +120,97 @@ const Station = ({
 const TrashBin = ({ position }: { position: [number, number, number] }) => (
   <group position={position}>
     <mesh castShadow receiveShadow>
-      <boxGeometry args={[2, 1.5, 2]} />
+      <boxGeometry args={[1.7, 1.65, 1.7]} />
       <meshStandardMaterial color="#808080" metalness={0.6} roughness={0.4} />
       {/* Open top effect */}
-      <mesh position={[0, 0.76, 0]}>
-        <boxGeometry args={[1.8, 0.01, 1.8]} />
+      <mesh position={[0, 0.835, 0]}>
+        <boxGeometry args={[1.53, 0.01, 1.53]} />
         <meshStandardMaterial color="#000" />
       </mesh>
     </mesh>
+
+    {/* Fluorescent Visuals */}
+    <group position={[0, 0.825, 0]}>
+      {/* Thicker Top Rim */}
+      <mesh position={[0, 0.01, 0.82]}>
+        <boxGeometry args={[1.7, 0.08, 0.08]} />
+        <meshStandardMaterial
+          color="#00cc66"
+          emissive="#00cc66"
+          emissiveIntensity={2}
+        />
+      </mesh>
+      <mesh position={[0, 0.01, -0.82]}>
+        <boxGeometry args={[1.7, 0.08, 0.08]} />
+        <meshStandardMaterial
+          color="#00cc66"
+          emissive="#00cc66"
+          emissiveIntensity={2}
+        />
+      </mesh>
+      <mesh position={[0.82, 0.01, 0]}>
+        <boxGeometry args={[0.08, 0.08, 1.7]} />
+        <meshStandardMaterial
+          color="#00cc66"
+          emissive="#00cc66"
+          emissiveIntensity={2}
+        />
+      </mesh>
+      <mesh position={[-0.82, 0.01, 0]}>
+        <boxGeometry args={[0.08, 0.08, 1.7]} />
+        <meshStandardMaterial
+          color="#00cc66"
+          emissive="#00cc66"
+          emissiveIntensity={2}
+        />
+      </mesh>
+
+      {/* Secondary Wrapping Strip (slightly below the top) */}
+      <group position={[0, -0.15, 0]}>
+        <mesh position={[0, 0, 0.855]}>
+          <boxGeometry args={[1.71, 0.045, 0.01]} />
+          <meshStandardMaterial
+            color="#00cc66"
+            emissive="#00cc66"
+            emissiveIntensity={1.5}
+          />
+        </mesh>
+        <mesh position={[0, 0, -0.855]}>
+          <boxGeometry args={[1.71, 0.045, 0.01]} />
+          <meshStandardMaterial
+            color="#00cc66"
+            emissive="#00cc66"
+            emissiveIntensity={1.5}
+          />
+        </mesh>
+        <mesh position={[0.855, 0, 0]}>
+          <boxGeometry args={[0.01, 0.045, 1.71]} />
+          <meshStandardMaterial
+            color="#00cc66"
+            emissive="#00cc66"
+            emissiveIntensity={1.5}
+          />
+        </mesh>
+        <mesh position={[-0.855, 0, 0]}>
+          <boxGeometry args={[0.01, 0.045, 1.71]} />
+          <meshStandardMaterial
+            color="#00cc66"
+            emissive="#00cc66"
+            emissiveIntensity={1.5}
+          />
+        </mesh>
+      </group>
+    </group>
+
     {/* Label on body (3D Text) */}
     <Text
-      position={[0, 0.5, 1.02]}
-      fontSize={0.35}
-      color="#f9a8d4"
+      position={[0, -0.65, 0.87]}
+      rotation={[0, 0, 0]}
+      fontSize={0.245}
+      color="white"
       anchorX="center"
       anchorY="middle"
-      outlineWidth={0.015}
+      outlineWidth={0.02}
       outlineColor="#000000"
     >
       WASTE BIN
@@ -187,11 +262,12 @@ const ShipmentBox = ({ position }: { position: [number, number, number] }) => (
 
 export const Scene = () => {
   const stations = useFactoryStore((state) => state.stations);
+  const resetVersion = useFactoryStore((state) => state.resetVersion);
 
   return (
     <Canvas shadows className="w-full h-full bg-black">
       <Suspense fallback={null}>
-        <PerspectiveCamera makeDefault position={[20, 15, 20]} fov={40} />
+        <PerspectiveCamera makeDefault position={[25, 17.3, 21]} fov={40} />
         <OrbitControls
           minPolarAngle={Math.PI / 6}
           maxPolarAngle={Math.PI / 2.2}
@@ -238,14 +314,14 @@ export const Scene = () => {
               color={station.color}
               label={station.name.en}
             />
-            {station.id === "sorting" && (
-              <TrashBin position={[(index - 3) * 4, 0, 2.5]} />
-            )}
           </group>
         ))}
 
+        {/* Relocated Trash Bin: Behind conveyor, between Sorting and Packaging */}
+        <TrashBin position={[10, 0, -2.5]} />
+
         {/* Conveyor Belt System */}
-        <ConveyorBelt />
+        <ConveyorBelt key={resetVersion} />
 
         {/* Shipment Box at end of line */}
         <ShipmentBox position={[16, 0, 0]} />
