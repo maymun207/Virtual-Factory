@@ -11,10 +11,7 @@ export const translations = {
         playbook: { tr: '🤖 ArAI Playbook Önerisi', en: '🤖 ArAI Playbook Suggestion' },
         critical: { tr: '⚠️ Kritik Olay Simülasyonu', en: '⚠️ Critical Event Simulation' },
         heatmap: { tr: '🔥 Defekt Haritası Güncelle', en: '🔥 Update Defect Heatmap' },
-        conveyorSpeed: { tr: 'Konveyör Hızı', en: 'Conveyor Speed' },
-        s_clk: { tr: 'Simülatör Periyodu (ms)', en: 'Simulator Period (ms)' },
-        c_clk: { tr: 'Konveyör Faktörü (C)', en: 'Conveyor Factor (C)' },
-        p_clk: { tr: 'Pres Faktörü (P)', en: 'Press Factor (P)' }
+        conveyorSpeed: { tr: 'Konveyör Hızı', en: 'Conveyor Speed' }
     },
     tilePassport: {
         title: { tr: '📔 Tile Passport - Canlı İzleme', en: '📔 Tile Passport - Live Tracking' },
