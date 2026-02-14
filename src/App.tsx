@@ -1,34 +1,20 @@
+import { useEffect } from "react";
 import { Scene } from "./components/factory/Scene";
 import { Dashboard } from "./components/ui/Dashboard";
-import { SimulationControls } from "./components/ui/SimulationControls";
-
-import { useEffect } from "react";
-import { useFactoryStore } from "./store/factoryStore";
+import { useTelemetryStore } from "./store/telemetryStore";
 
 function App() {
-  // Start telemetry sync
   useEffect(() => {
-    const { startTelemetrySync, stopTelemetrySync } =
-      useFactoryStore.getState();
-    startTelemetrySync();
-    return () => stopTelemetrySync();
+    useTelemetryStore.getState().startTelemetrySync();
+    return () => {
+      useTelemetryStore.getState().stopTelemetrySync();
+    };
   }, []);
 
   return (
     <div className="relative w-screen h-screen overflow-hidden bg-black">
-      {/* 3D Scene Layer */}
-      <div className="absolute inset-0 z-0">
-        <Scene />
-      </div>
-
-      {/* UI Overlay Layer */}
-      <div className="absolute inset-0 z-10 pointer-events-none">
-        {/* Enable pointer events only for interactive UI elements */}
-        <div className="pointer-events-auto">
-          <Dashboard />
-          <SimulationControls />
-        </div>
-      </div>
+      <Scene />
+      <Dashboard />
     </div>
   );
 }

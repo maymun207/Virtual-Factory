@@ -1,74 +1,72 @@
-import { useState } from "react";
-import { useFactoryStore } from "../../store/factoryStore";
-import { translations } from "../../lib/translations";
+/**
+ * KPIContainer — Key Performance Indicators display panel.
+ * Positioned as a bottom popup, toggled via the BottomToolbar.
+ */
+import { useKPIStore } from "../../store/kpiStore";
+import { useUIStore } from "../../store/uiStore";
+import { useTranslation } from "../../hooks/useTranslation";
+import { useDraggablePanel } from "../../hooks/useDraggablePanel";
 
 export const KPIContainer = () => {
-  const { kpis, currentLang } = useFactoryStore();
-  const [collapsed, setCollapsed] = useState(true);
+  const kpis = useKPIStore((s) => s.kpis);
+  const currentLang = useUIStore((s) => s.currentLang);
+  const showKPI = useUIStore((s) => s.showKPI);
+  const toggleKPI = useUIStore((s) => s.toggleKPI);
+  const t = useTranslation("kpiPane");
 
-  const t = (key: keyof typeof translations.kpiPane) =>
-    translations.kpiPane[key][currentLang];
+  const { position, width, handleMouseDown } =
+    useDraggablePanel("btn-kpi-panel");
+
+  if (!showKPI) return null;
 
   return (
     <div
-      className={`fixed top-24 right-4 z-30 bg-black/80 backdrop-blur-xl border-2 border-[#00ff88] rounded-2xl shadow-[0_0_20px_rgba(0,255,136,0.4)] transition-all duration-300 flex flex-row-reverse overflow-hidden ${collapsed ? "w-12" : "w-80"}`}
+      className="fixed z-50 bg-black/95 border border-emerald-500/30 rounded-xl p-4 text-white shadow-2xl backdrop-blur-xl"
+      style={{
+        left: position.x,
+        bottom: position.y,
+        width: Math.max(width, 260),
+      }}
     >
-      {/* Vertical Header / Toggle Side */}
+      {/* Drag Handle */}
       <div
-        onClick={() => setCollapsed(!collapsed)}
-        className={`w-12 flex flex-col items-center justify-between py-4 cursor-pointer hover:bg-[#00ff88]/5 transition-colors ${collapsed ? "" : "border-l border-[#00ff88]/30 bg-[#00ff88]/10"}`}
+        className="cursor-grab active:cursor-grabbing mb-3 text-center text-xs text-emerald-400/70 select-none border-b border-emerald-500/20 pb-2 flex justify-between"
+        onMouseDown={handleMouseDown}
       >
-        <div className="flex flex-col items-center gap-8">
-          <span className="text-white/80 font-bold text-lg">
-            {collapsed ? "+" : "−"}
-          </span>
-          <span
-            className="text-[#00ff88] font-bold text-xs whitespace-nowrap tracking-[0.2em] uppercase"
-            style={{ writingMode: "vertical-rl", transform: "rotate(180deg)" }}
-          >
-            {t("title").split(" ").slice(1).join(" ")}
-          </span>
-        </div>
-        <span className="text-xl">📊</span>
+        <span>⠿ {t("title")}</span>
+        <button onClick={toggleKPI} className="text-white/50 hover:text-white">
+          ✕
+        </button>
       </div>
 
-      {/* Content Side */}
-      {!collapsed && (
-        <div className="flex-1 p-5 overflow-y-auto max-h-[70vh] custom-scrollbar">
-          <div className="flex flex-col gap-3">
-            {kpis.map((kpi) => (
-              <div
-                key={kpi.id}
-                className="relative group bg-white/5 border border-[#00ff88]/20 rounded-xl p-4 transition-all duration-300 hover:bg-[#00ff88]/10 hover:translate-x-[-4px] cursor-pointer"
-              >
-                <div className="absolute inset-0 bg-gradient-to-r from-[#00ff88]/0 via-[#00ff88]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-
-                <div className="flex justify-between items-start mb-2">
-                  <span className="text-[11px] text-white/50 uppercase tracking-wider font-bold">
-                    {kpi.label[currentLang]}
-                  </span>
-                  <span
-                    className={`text-[11px] font-bold flex items-center gap-1 ${kpi.trendDirection === "up" ? "text-[#00ff88]" : "text-[#ff4444]"}`}
-                  >
-                    {kpi.trend[currentLang]}
-                  </span>
-                </div>
-
-                <div className="flex items-baseline gap-2">
-                  <span
-                    className={`text-3xl font-bold drop-shadow-[0_0_10px_rgba(0,255,136,0.3)] ${kpi.status === "warning" ? "text-[#ffaa00]" : kpi.status === "error" ? "text-[#ff4444]" : "text-[#00ff88]"}`}
-                  >
-                    {kpi.value}
-                  </span>
-                  <span className="text-sm text-white/40 font-medium">
-                    {kpi.unit}
-                  </span>
-                </div>
-              </div>
-            ))}
+      {/* KPI Cards */}
+      <div className="space-y-1.5">
+        {kpis.map((kpi) => (
+          <div
+            key={kpi.id}
+            className="flex items-center justify-between py-1.5 px-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
+          >
+            <div>
+              <span className="text-[9px] text-white/60 block leading-tight">
+                {kpi.label[currentLang]}
+              </span>
+              <span className="text-sm font-mono font-bold text-white leading-tight">
+                {kpi.value}
+                <span className="text-[8px] text-white/40 ml-0.5">
+                  {kpi.unit}
+                </span>
+              </span>
+            </div>
+            <span
+              className={`text-[10px] font-mono ${
+                kpi.trendDirection === "up" ? "text-green-400" : "text-red-400"
+              }`}
+            >
+              {kpi.trend[currentLang]}
+            </span>
           </div>
-        </div>
-      )}
+        ))}
+      </div>
     </div>
   );
 };

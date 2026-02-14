@@ -7,15 +7,27 @@ export const translations = {
         title: { tr: '🎮 Kontrol & Aksiyonlar', en: '🎮 Control & Actions' },
         start: { tr: '🔄 Veri Akışını Başlat', en: '🔄 Start Data Flow' },
         stop: { tr: '⏸️ Veri Akışını Durdur', en: '⏸️ Stop Data Flow' },
+        startData: { tr: '▶ Veri Akışını Başlat', en: '▶ Start Data Flow' },
+        stopData: { tr: '⏹ Veri Akışını Durdur', en: '⏹ Stop Data Flow' },
         passport: { tr: '📔 Tile Passport Detayı', en: '📔 Tile Passport Details' },
         playbook: { tr: '🤖 ArAI Playbook Önerisi', en: '🤖 ArAI Playbook Suggestion' },
         critical: { tr: '⚠️ Kritik Olay Simülasyonu', en: '⚠️ Critical Event Simulation' },
         heatmap: { tr: '🔥 Defekt Haritası Güncelle', en: '🔥 Update Defect Heatmap' },
         conveyorSpeed: { tr: 'Konveyör Hızı', en: 'Conveyor Speed' },
+        speed: { tr: 'Hız', en: 'Speed' },
         s_clk: { tr: 'S_clk (Simülatör Periyodu)', en: 'S_clk (Simulator Period)' },
+        sClockPeriod: { tr: 'S_clk Periyodu', en: 'S_clk Period' },
         stationInterval: { tr: 'İstasyon Aralığı', en: 'Station Interval' },
         showTable: { tr: '📊 Üretim Tablosunu Göster', en: '📊 Show Production Table' },
-        simParams: { tr: '⚙️ Simülasyon Parametreleri', en: '⚙️ Simulation Parameters' }
+        simParams: { tr: '⚙️ Simülasyon Parametreleri', en: '⚙️ Simulation Parameters' },
+        conveyorStatus: { tr: 'Konveyör Durumu', en: 'Conveyor Status' },
+        running: { tr: 'Çalışıyor', en: 'Running' },
+        stopped: { tr: 'Durdu', en: 'Stopped' },
+        jammed: { tr: 'Sıkıştı', en: 'Jammed' },
+        tilePassport: { tr: '📔 Tile Passport', en: '📔 Tile Passport' },
+        defectHeatmap: { tr: '🔥 Defekt Haritası', en: '🔥 Defect Heatmap' },
+        productionTable: { tr: '📊 Üretim Tablosu', en: '📊 Production Table' },
+        kpiPanel: { tr: '📊 KPI Paneli', en: '📊 KPI Panel' }
     },
     tilePassport: {
         title: { tr: '📔 Tile Passport - Canlı İzleme', en: '📔 Tile Passport - Live Tracking' },
@@ -25,7 +37,9 @@ export const translations = {
         recipe: { tr: 'Reçete', en: 'Recipe' },
         location: { tr: '📍 Mevcut Konum', en: '📍 Current Location' },
         quality: { tr: 'Kalite: A', en: 'Quality: A' },
-        tracking: { tr: 'Canlı İzleme Aktif', en: 'Live Tracking Active' }
+        tracking: { tr: 'Canlı İzleme Aktif', en: 'Live Tracking Active' },
+        qualityScore: { tr: 'Kalite Skoru', en: 'Quality Score' },
+        realtime: { tr: 'Gerçek Zamanlı', en: 'Realtime' }
     },
     playbook: {
         title: { tr: '🤖 ArAI Chat With Your Factory - Aksiyon Önerisi', en: '🤖 ArAI Chat With Your Factory - Action Suggestion' },
@@ -54,7 +68,8 @@ export const translations = {
         applyAndClose: { tr: 'Uygula ve Kapat', en: 'Apply and Close' }
     },
     defects: {
-        heatmapTitle: { tr: 'FTQ & Defekt Isı Haritası', en: 'FTQ & Defect Heatmap' }
+        heatmapTitle: { tr: 'FTQ & Defekt Isı Haritası', en: 'FTQ & Defect Heatmap' },
+        title: { tr: 'FTQ & Defekt Isı Haritası', en: 'FTQ & Defect Heatmap' }
     },
     kpiPane: {
         title: { tr: '📊 Anahtar Performans Göstergeleri', en: '📊 Key Performance Indicators' }

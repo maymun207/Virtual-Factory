@@ -1,7 +1,6 @@
 import { useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
-import { useFactoryStore } from '../store/factoryStore';
-import { STATION_SPACING } from '../lib/constants';
+import { useSimulationStore } from '../store/simulationStore';
 
 /**
  * useSystemTimer — The heartbeat of the simulator.
@@ -13,7 +12,7 @@ export const useSystemTimer = () => {
   const accumulatorRef = useRef(0);
 
   useFrame((_, delta) => {
-    const state = useFactoryStore.getState();
+    const state = useSimulationStore.getState();
 
     // ── Guard: Only tick when simulation is active ──
     if (!state.isDataFlowing || state.conveyorStatus !== 'running') {
@@ -34,18 +33,4 @@ export const useSystemTimer = () => {
   });
 
   return null;
-};
-
-/**
- * Compute the base velocity for tile/slat movement.
- * This is a pure function — call it wherever velocity is needed.
- *
- * @returns Progress units per second (before conveyorSpeed scaling)
- */
-export const computeBaseVelocity = (
-  sClockPeriod: number,
-  stationInterval: number
-): number => {
-  const T_station = (sClockPeriod * stationInterval) / 1000; // seconds per station
-  return STATION_SPACING / T_station; // progress units per second
 };

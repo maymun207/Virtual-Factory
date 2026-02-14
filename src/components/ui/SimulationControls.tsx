@@ -1,71 +1,47 @@
+/**
+ * SimulationControls — Play/Stop/Reset buttons.
+ */
 import { Play, Square, RotateCcw } from "lucide-react";
-import { useFactoryStore } from "../../store/factoryStore";
+import { useSimulationStore } from "../../store/simulationStore";
+import { COLORS } from "../../lib/params";
 
 export const SimulationControls = () => {
-  const { isDataFlowing, toggleDataFlow, resetFactory } = useFactoryStore();
-
-  const handleStart = () => {
-    if (!isDataFlowing) {
-      toggleDataFlow();
-    }
-  };
-
-  const handleStop = () => {
-    if (isDataFlowing) {
-      toggleDataFlow();
-    }
-  };
-
-  const handleReset = () => {
-    resetFactory();
-  };
+  const isDataFlowing = useSimulationStore((s) => s.isDataFlowing);
+  const toggleDataFlow = useSimulationStore((s) => s.toggleDataFlow);
+  const resetFactory = useSimulationStore((s) => s.resetFactory);
 
   return (
-    <div className="fixed bottom-8 right-8 flex items-center gap-4 z-50">
-      <div className="flex gap-2 p-2 bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl">
-        <button
-          onClick={handleStart}
-          disabled={isDataFlowing}
-          className={`group relative p-4 rounded-xl transition-all duration-300 ${
-            isDataFlowing
-              ? "bg-white/5 text-white/20 cursor-not-allowed"
-              : "bg-[#00ff88]/20 text-[#00ff88] border border-[#00ff88]/50 hover:bg-[#00ff88] hover:text-black hover:shadow-[0_0_20px_rgba(0,255,136,0.6)]"
-          }`}
-          title="Start"
-        >
-          <Play
-            size={24}
-            fill={!isDataFlowing ? "currentColor" : "none"}
-            className={!isDataFlowing ? "ml-1" : ""}
-          />
-        </button>
+    <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 z-50 flex items-center gap-3">
+      {/* Play / Stop */}
+      <button
+        onClick={toggleDataFlow}
+        className={`group relative flex items-center gap-2 px-6 py-3 rounded-full font-medium text-sm transition-all duration-300 border ${
+          isDataFlowing
+            ? `bg-[${COLORS.error}]/20 text-[${COLORS.error}] border border-[${COLORS.error}]/50 hover:bg-[${COLORS.error}] hover:text-white hover:shadow-[0_0_20px_rgba(255,68,68,0.6)]`
+            : `bg-[${COLORS.primary}]/20 text-[${COLORS.primary}] border border-[${COLORS.primary}]/50 hover:bg-[${COLORS.primary}] hover:text-black hover:shadow-[0_0_20px_rgba(0,255,136,0.6)]`
+        }`}
+      >
+        {isDataFlowing ? (
+          <>
+            <Square size={16} />
+            Stop
+          </>
+        ) : (
+          <>
+            <Play size={16} />
+            Start
+          </>
+        )}
+      </button>
 
-        <button
-          onClick={handleStop}
-          disabled={!isDataFlowing}
-          className={`group relative p-4 rounded-xl transition-all duration-300 ${
-            !isDataFlowing
-              ? "bg-white/5 text-white/20 cursor-not-allowed"
-              : "bg-[#ff4444]/20 text-[#ff4444] border border-[#ff4444]/50 hover:bg-[#ff4444] hover:text-white hover:shadow-[0_0_20px_rgba(255,68,68,0.6)]"
-          }`}
-          title="Stop"
-        >
-          <Square size={24} fill={isDataFlowing ? "currentColor" : "none"} />
-        </button>
-
-        <div className="w-px bg-white/10 mx-1" />
-
-        <button
-          onClick={handleReset}
-          className="group relative p-4 rounded-xl bg-white/5 text-white/80 border border-white/10 hover:bg-white/20 hover:text-white hover:border-white/30 transition-all duration-300"
-          title="Reset"
-        >
-          <RotateCcw
-            size={24}
-            className="group-hover:-rotate-180 transition-transform duration-500"
-          />
-        </button>
-      </div>
+      {/* Reset */}
+      <button
+        onClick={resetFactory}
+        className="flex items-center gap-2 px-4 py-3 rounded-full font-medium text-sm transition-all duration-300 border border-white/20 text-white/60 hover:border-white/50 hover:text-white hover:bg-white/10"
+      >
+        <RotateCcw size={16} />
+        Reset
+      </button>
     </div>
   );
 };

@@ -1,102 +1,31 @@
-import { Plus } from "lucide-react";
-import { useFactoryStore } from "../../store/factoryStore";
+import { Settings } from "lucide-react";
+import { useUIStore } from "../../store/uiStore";
 import { translations } from "../../lib/translations";
 
 export const BottomToolbar = () => {
-  const {
-    currentLang,
-    togglePassport,
-    toggleHeatmap,
-    toggleControlPanel,
-    showPassport,
-    showHeatmap,
-    showControlPanel,
-  } = useFactoryStore();
+  const currentLang = useUIStore((s) => s.currentLang);
+  const toggleControlPanel = useUIStore((s) => s.toggleControlPanel);
+  const showControlPanel = useUIStore((s) => s.showControlPanel);
 
   const t = translations;
 
   return (
-    <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[60] flex gap-6 items-end">
-      {/* Tile Passport Button */}
-      <button
-        id="btn-tile-passport"
-        onClick={togglePassport}
-        className={`group relative flex items-center gap-3 px-6 py-4 rounded-2xl border transition-all duration-300 ${
-          showPassport
-            ? "bg-[#00ff88]/20 border-[#00ff88] text-white shadow-[0_0_20px_rgba(0,255,136,0.3)]"
-            : "bg-black/60 backdrop-blur-xl border-[#00ff88]/30 text-white/80 hover:bg-[#00ff88]/10 hover:border-[#00ff88]/60 hover:text-white"
-        }`}
-      >
-        <span className="font-bold text-sm tracking-wide">
-          {t.tilePassport.title[currentLang]}
-        </span>
-        <div
-          className={`w-6 h-6 rounded-lg flex items-center justify-center transition-colors ${
-            showPassport
-              ? "bg-[#00ff88] text-black"
-              : "bg-white/10 text-white group-hover:bg-[#00ff88]/20"
-          }`}
-        >
-          <Plus
-            size={14}
-            className={`transition-transform duration-300 ${showPassport ? "rotate-45" : ""}`}
-          />
-        </div>
-      </button>
-
-      {/* Control & Actions Button */}
-      <button
-        id="btn-control-actions"
-        onClick={toggleControlPanel}
-        className={`group relative flex items-center gap-3 px-6 py-4 rounded-2xl border transition-all duration-300 ${
-          showControlPanel
-            ? "bg-[#00ff88]/20 border-[#00ff88] text-white shadow-[0_0_20px_rgba(0,255,136,0.3)]"
-            : "bg-black/60 backdrop-blur-xl border-[#00ff88]/30 text-white/80 hover:bg-[#00ff88]/10 hover:border-[#00ff88]/60 hover:text-white"
-        }`}
-      >
-        <span className="font-bold text-sm tracking-wide">
-          {t.controlPanel.title[currentLang]}
-        </span>
-        <div
-          className={`w-6 h-6 rounded-lg flex items-center justify-center transition-colors ${
-            showControlPanel
-              ? "bg-[#00ff88] text-black"
-              : "bg-white/10 text-white group-hover:bg-[#00ff88]/20"
-          }`}
-        >
-          <Plus
-            size={14}
-            className={`transition-transform duration-300 ${showControlPanel ? "rotate-45" : ""}`}
-          />
-        </div>
-      </button>
-
-      {/* Heatmap Button */}
-      <button
-        id="btn-defect-heatmap"
-        onClick={toggleHeatmap}
-        className={`group relative flex items-center gap-3 px-6 py-4 rounded-2xl border transition-all duration-300 ${
-          showHeatmap
-            ? "bg-[#00ff88]/20 border-[#00ff88] text-white shadow-[0_0_20px_rgba(0,255,136,0.3)]"
-            : "bg-black/60 backdrop-blur-xl border-[#00ff88]/30 text-white/80 hover:bg-[#00ff88]/10 hover:border-[#00ff88]/60 hover:text-white"
-        }`}
-      >
-        <span className="font-bold text-sm tracking-wide">
-          {t.defects.heatmapTitle[currentLang]}
-        </span>
-        <div
-          className={`w-6 h-6 rounded-lg flex items-center justify-center transition-colors ${
-            showHeatmap
-              ? "bg-[#00ff88] text-black"
-              : "bg-white/10 text-white group-hover:bg-[#00ff88]/20"
-          }`}
-        >
-          <Plus
-            size={14}
-            className={`transition-transform duration-300 ${showHeatmap ? "rotate-45" : ""}`}
-          />
-        </div>
-      </button>
-    </div>
+    <button
+      id="btn-control-actions"
+      onClick={toggleControlPanel}
+      className={`fixed bottom-6 right-6 z-[60] group flex items-center gap-3 px-6 py-3.5 rounded-2xl border-2 transition-all duration-300 shadow-lg ${
+        showControlPanel
+          ? "bg-[#00ff88]/20 border-[#00ff88] text-white shadow-[0_0_25px_rgba(0,255,136,0.4)]"
+          : "bg-black/70 backdrop-blur-xl border-[#00ff88]/40 text-white/90 hover:bg-[#00ff88]/10 hover:border-[#00ff88]/70 hover:text-white hover:shadow-[0_0_20px_rgba(0,255,136,0.3)]"
+      }`}
+    >
+      <Settings
+        size={18}
+        className={`transition-transform duration-500 ${showControlPanel ? "rotate-90 text-[#00ff88]" : "text-[#00ff88]/70 group-hover:rotate-45"}`}
+      />
+      <span className="font-bold text-sm tracking-wide">
+        {t.controlPanel.title[currentLang]}
+      </span>
+    </button>
   );
 };

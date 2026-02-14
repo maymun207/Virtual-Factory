@@ -1,6 +1,32 @@
+/**
+ * ProductionTable3D — 3D status matrix table shown in the scene.
+ */
 import { memo } from "react";
 import { Text } from "@react-three/drei";
-import { useFactoryStore } from "../../store/factoryStore";
+import { useSimulationStore } from "../../store/simulationStore";
+import { useUIStore } from "../../store/uiStore";
+import {
+  COLORS,
+  MATERIALS,
+  TEXT_SIZES,
+  TABLE_ROW_COUNT,
+  TABLE_HEIGHT,
+  TABLE_WIDTH,
+  TABLE_CENTER_X,
+  TABLE_STATION_X,
+  TABLE_CLOCK_X,
+  TABLE_V_LINES,
+  TABLE_BASE_PADDING,
+  TABLE_BORDER_PADDING,
+  TABLE_BORDER_Z,
+  TABLE_GRID_Z,
+  TABLE_CONTENT_Z,
+  TABLE_GRID_THICKNESS,
+  TABLE_BASE_DEPTH,
+  TABLE_BORDER_DEPTH,
+  PRODUCTION_TABLE_POSITION,
+  PRODUCTION_TABLE_ROTATION,
+} from "../../lib/params";
 
 const TableRow = memo(
   ({
@@ -16,26 +42,31 @@ const TableRow = memo(
     stationX: number[];
     clockX: number;
   }) => {
+    const cellHeight = TABLE_HEIGHT / (TABLE_ROW_COUNT + 1);
     return (
-      <group position={[0, -rIdx * (10 / 10), 0]}>
-        {/* Tick/Clock ID */}
+      <group position={[0, -rIdx * cellHeight, 0]}>
         <Text
           position={[clockX, 0, 0]}
-          fontSize={0.26}
-          color={rIdx === 0 ? "#fff" : "#666"}
+          fontSize={TEXT_SIZES.tableClockCell}
+          color={rIdx === 0 ? COLORS.tableActiveRow : COLORS.tableInactiveRow}
           anchorX="center"
           anchorY="middle"
         >
           {displayTick ? `P_clk -> ${displayTick}` : "-"}
         </Text>
 
-        {/* Station Occupancy Cells */}
         {row.map((cell, cIdx) => (
           <Text
             key={`cell-${rIdx}-${cIdx}`}
             position={[stationX[cIdx], 0, 0]}
-            fontSize={0.24}
-            color={rIdx === 0 ? "#00ff88" : cell ? "#ffffff" : "#222"}
+            fontSize={TEXT_SIZES.tableCell}
+            color={
+              rIdx === 0
+                ? COLORS.tableActiveCell
+                : cell
+                  ? COLORS.tableCellWhite
+                  : COLORS.tableEmptyCell
+            }
             anchorX="center"
             anchorY="middle"
           >
@@ -48,74 +79,76 @@ const TableRow = memo(
 );
 
 export const ProductionTable3D = () => {
-  const statusMatrix = useFactoryStore((state) => state.statusMatrix);
-  const pClockCount = useFactoryStore((state) => state.pClockCount);
-  const stations = useFactoryStore((state) => state.stations);
-  const currentLang = useFactoryStore((state) => state.currentLang);
-  const showProductionTable = useFactoryStore(
-    (state) => state.showProductionTable,
-  );
+  const statusMatrix = useSimulationStore((s) => s.statusMatrix);
+  const pClockCount = useSimulationStore((s) => s.pClockCount);
+  const stations = useSimulationStore((s) => s.stations);
+  const currentLang = useUIStore((s) => s.currentLang);
+  const showProductionTable = useUIStore((s) => s.showProductionTable);
 
   if (!showProductionTable) return null;
 
-  // Layout Constants (Based on Scene.tsx station positions)
-  const stationX = [-12, -8, -4, 0, 4, 8, 12];
-  const clockX = -15.5;
-  const vLinesBoundaries = [-17, -14, -10, -6, -2, 2, 6, 10, 14];
-
-  const tableHeight = 10;
-  const rowCount = 9;
-  const cellHeight = tableHeight / (rowCount + 1); // +1 for header
-  const tableWidth = 31; // From -17 to 14
-  const centerX = -1.5; // Offset to center the table mesh relative to the group
+  const cellHeight = TABLE_HEIGHT / (TABLE_ROW_COUNT + 1);
 
   return (
-    <group position={[0, 0.05, 8.5]} rotation={[-Math.PI / 2.5, 0, 0]}>
-      {/* Table Base - Semi-transparent Industrial Black */}
-      <mesh position={[centerX, 0, 0]} receiveShadow>
-        <boxGeometry args={[tableWidth + 0.6, tableHeight + 0.6, 0.1]} />
+    <group
+      position={PRODUCTION_TABLE_POSITION}
+      rotation={PRODUCTION_TABLE_ROTATION}
+    >
+      {/* Table Base */}
+      <mesh position={[TABLE_CENTER_X, 0, 0]} receiveShadow>
+        <boxGeometry
+          args={[
+            TABLE_WIDTH + TABLE_BASE_PADDING,
+            TABLE_HEIGHT + TABLE_BASE_PADDING,
+            TABLE_BASE_DEPTH,
+          ]}
+        />
         <meshStandardMaterial
-          color="#0a0a0a"
-          roughness={0.1}
-          metalness={0.9}
+          color={COLORS.tableBackground}
+          roughness={MATERIALS.tableBase.roughness}
+          metalness={MATERIALS.tableBase.metalness}
           transparent
-          opacity={0.8}
+          opacity={MATERIALS.tableBase.opacity}
         />
       </mesh>
 
       {/* Outer Glow Border */}
-      <mesh position={[centerX, 0, -0.06]}>
-        <boxGeometry args={[tableWidth + 0.8, tableHeight + 0.8, 0.05]} />
+      <mesh position={[TABLE_CENTER_X, 0, TABLE_BORDER_Z]}>
+        <boxGeometry
+          args={[
+            TABLE_WIDTH + TABLE_BORDER_PADDING,
+            TABLE_HEIGHT + TABLE_BORDER_PADDING,
+            TABLE_BORDER_DEPTH,
+          ]}
+        />
         <meshStandardMaterial
-          color="#00ff88"
-          emissive="#00ff88"
-          emissiveIntensity={0.6}
+          color={COLORS.tableBorder}
+          emissive={COLORS.tableBorder}
+          emissiveIntensity={MATERIALS.tableBorderGlow.emissiveIntensity}
         />
       </mesh>
 
-      {/* Header Row Content */}
-      <group position={[0, tableHeight / 2 - cellHeight / 2, 0.1]}>
-        {/* P_clk Header */}
+      {/* Header Row */}
+      <group position={[0, TABLE_HEIGHT / 2 - cellHeight / 2, TABLE_CONTENT_Z]}>
         <Text
-          position={[clockX, 0, 0]}
-          fontSize={0.32}
-          color="#fbbf24"
+          position={[TABLE_CLOCK_X, 0, 0]}
+          fontSize={TEXT_SIZES.tableHeader}
+          color={COLORS.tableHeaderColor}
           anchorX="center"
           anchorY="middle"
         >
           {currentLang === "tr" ? "SAAT" : "CLOCK"}
         </Text>
 
-        {/* Station Headers */}
         {stations.map((station, i) => (
           <Text
             key={station.id}
-            position={[stationX[i], 0, 0]}
-            fontSize={0.28}
+            position={[TABLE_STATION_X[i], 0, 0]}
+            fontSize={TEXT_SIZES.tableStationHeader}
             color={station.color}
             anchorX="center"
             anchorY="middle"
-            maxWidth={3.5}
+            maxWidth={TEXT_SIZES.tableStationHeaderMaxWidth}
             textAlign="center"
           >
             {station.name[currentLang]}
@@ -124,37 +157,50 @@ export const ProductionTable3D = () => {
       </group>
 
       {/* Grid Lines - Horizontal */}
-      {Array.from({ length: rowCount + 2 }).map((_, i) => (
+      {Array.from({ length: TABLE_ROW_COUNT + 2 }).map((_, i) => (
         <mesh
           key={`h-line-${i}`}
-          position={[centerX, tableHeight / 2 - i * cellHeight, 0.06]}
+          position={[
+            TABLE_CENTER_X,
+            TABLE_HEIGHT / 2 - i * cellHeight,
+            TABLE_GRID_Z,
+          ]}
         >
-          <planeGeometry args={[tableWidth, 0.025]} />
-          <meshBasicMaterial color="#333" transparent opacity={0.5} />
+          <planeGeometry args={[TABLE_WIDTH, TABLE_GRID_THICKNESS]} />
+          <meshBasicMaterial
+            color={COLORS.tableGridLine}
+            transparent
+            opacity={MATERIALS.tableGridLine.opacity}
+          />
         </mesh>
       ))}
 
       {/* Grid Lines - Vertical */}
-      {vLinesBoundaries.map((x, i) => (
-        <mesh key={`v-line-${i}`} position={[x, 0, 0.06]}>
-          <planeGeometry args={[0.025, tableHeight]} />
-          <meshBasicMaterial color="#333" transparent opacity={0.5} />
+      {TABLE_V_LINES.map((x, i) => (
+        <mesh key={`v-line-${i}`} position={[x, 0, TABLE_GRID_Z]}>
+          <planeGeometry args={[TABLE_GRID_THICKNESS, TABLE_HEIGHT]} />
+          <meshBasicMaterial
+            color={COLORS.tableGridLine}
+            transparent
+            opacity={MATERIALS.tableGridLine.opacity}
+          />
         </mesh>
       ))}
 
       {/* Matrix Data Rows */}
-      <group position={[0, tableHeight / 2 - cellHeight * 1.5, 0.1]}>
+      <group
+        position={[0, TABLE_HEIGHT / 2 - cellHeight * 1.5, TABLE_CONTENT_Z]}
+      >
         {statusMatrix.map((row, rIdx) => {
           const displayTick = pClockCount > rIdx ? pClockCount - rIdx : null;
-
           return (
             <TableRow
               key={`row-${rIdx}`}
               rIdx={rIdx}
               row={row}
               displayTick={displayTick}
-              stationX={stationX}
-              clockX={clockX}
+              stationX={TABLE_STATION_X}
+              clockX={TABLE_CLOCK_X}
             />
           );
         })}

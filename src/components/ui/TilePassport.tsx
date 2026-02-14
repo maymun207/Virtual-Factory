@@ -1,160 +1,101 @@
-import { useState, useRef, useEffect } from "react";
-import { useFactoryStore } from "../../store/factoryStore";
-import { translations } from "../../lib/translations";
+/**
+ * TilePassport — Shows detail view for a specific tile.
+ * Uses shared hooks. No dead state variables.
+ */
+import { useSimulationStore } from "../../store/simulationStore";
+import { useUIStore } from "../../store/uiStore";
+import { useTranslation } from "../../hooks/useTranslation";
+import { useDraggablePanel } from "../../hooks/useDraggablePanel";
+import { STATION_COUNT } from "../../lib/params";
 
 export const TilePassport = () => {
-  const { currentLang, pClockCount, stations, showPassport, togglePassport } =
-    useFactoryStore();
-  const [minimized] = useState(false);
-  // Derive a tile's current station index from pClockCount (cycles through stations)
-  const currentStationIdx = pClockCount > 0 ? (pClockCount - 1) % 7 : 0;
+  const pClockCount = useSimulationStore((s) => s.pClockCount);
+  const stations = useSimulationStore((s) => s.stations);
+  const showPassport = useUIStore((s) => s.showPassport);
+  const togglePassport = useUIStore((s) => s.togglePassport);
+  const currentLang = useUIStore((s) => s.currentLang);
 
-  const [position, setPosition] = useState({ x: 0, y: 100 });
-  const [width, setWidth] = useState(320);
-  const isDragging = useRef(false);
-  const dragOffset = useRef({ x: 0, y: 0 });
-
-  useEffect(() => {
-    const updatePosition = () => {
-      const btn = document.getElementById("btn-tile-passport");
-      if (btn) {
-        const rect = btn.getBoundingClientRect();
-        setPosition({
-          x: rect.left,
-          y: window.innerHeight - rect.top + 20,
-        });
-        setWidth(rect.width);
-      }
-    };
-
-    updatePosition();
-    window.addEventListener("resize", updatePosition);
-    window.addEventListener("scroll", updatePosition);
-
-    return () => {
-      window.removeEventListener("resize", updatePosition);
-      window.removeEventListener("scroll", updatePosition);
-    };
-  }, []);
-
-  const handleMouseDown = (e: React.MouseEvent) => {
-    isDragging.current = true;
-    dragOffset.current = {
-      x: e.clientX - position.x,
-      y: window.innerHeight - e.clientY - position.y,
-    };
-  };
-
-  useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      if (isDragging.current) {
-        setPosition({
-          x: e.clientX - dragOffset.current.x,
-          y: window.innerHeight - e.clientY - dragOffset.current.y,
-        });
-      }
-    };
-
-    const handleMouseUp = () => {
-      isDragging.current = false;
-    };
-
-    document.addEventListener("mousemove", handleMouseMove);
-    document.addEventListener("mouseup", handleMouseUp);
-
-    return () => {
-      document.removeEventListener("mousemove", handleMouseMove);
-      document.removeEventListener("mouseup", handleMouseUp);
-    };
-  }, []);
-
-  const t = (key: keyof typeof translations.tilePassport) =>
-    translations.tilePassport[key][currentLang];
+  const t = useTranslation("tilePassport");
+  const { position, width, handleMouseDown } =
+    useDraggablePanel("btn-tile-passport");
 
   if (!showPassport) return null;
 
+  const currentStationIdx =
+    pClockCount > 0 ? Math.min(pClockCount - 1, STATION_COUNT - 1) : 0;
+  const currentStation = stations[currentStationIdx];
+
   return (
     <div
-      style={{ left: position.x, bottom: position.y, width }}
-      className={`fixed z-40 bg-black/80 backdrop-blur-xl border-2 border-[#00ff88] rounded-2xl shadow-[0_0_20px_rgba(0,255,136,0.4)] transition-all duration-300 flex flex-col-reverse`}
+      className="fixed z-50 bg-black/95 border border-emerald-500/30 rounded-xl p-4 text-white shadow-2xl backdrop-blur-xl"
+      style={{
+        left: position.x,
+        bottom: position.y,
+        width: Math.max(width, 280),
+      }}
     >
+      {/* Drag Handle */}
       <div
+        className="cursor-grab active:cursor-grabbing mb-3 text-center text-xs text-emerald-400/70 select-none border-b border-emerald-500/20 pb-2 flex justify-between"
         onMouseDown={handleMouseDown}
-        className={`flex justify-between items-center cursor-move select-none transition-all ${minimized ? "px-3 py-2" : "p-3 bg-[#00ff88]/10 border-t border-[#00ff88]/30 rounded-b-2xl"}`}
       >
-        <span className="text-[#00ff88] font-bold text-sm leading-tight text-center w-full break-words whitespace-normal px-1">
-          {t("title")} {showPassport && "- Live Tracking"}
-        </span>
+        <span>⠿ {t("title")}</span>
         <button
           onClick={togglePassport}
-          className="bg-white/10 hover:bg-[#ff4444]/20 text-white/80 hover:text-[#ff4444] w-6 h-6 rounded-md flex items-center justify-center transition-all ml-2 flex-shrink-0"
+          className="text-white/50 hover:text-white"
         >
           ✕
         </button>
       </div>
 
-      {!minimized && (
-        <div className="p-4">
-          <div className="grid grid-cols-2 gap-3 mb-4">
-            <div className="flex flex-col gap-0.5">
-              <span className="text-[10px] text-white/50 uppercase tracking-wider">
-                {t("tileId")}:
-              </span>
-              <span className="text-xs text-[#00d4ff] font-bold">#000123</span>
-            </div>
-            <div className="flex flex-col gap-0.5">
-              <span className="text-[10px] text-white/50 uppercase tracking-wider">
-                {t("lot")}:
-              </span>
-              <span className="text-xs text-[#00d4ff] font-bold">L-4589</span>
-            </div>
-            <div className="flex flex-col gap-0.5">
-              <span className="text-[10px] text-white/50 uppercase tracking-wider">
-                {t("order")}:
-              </span>
-              <span className="text-xs text-[#00d4ff] font-bold">O-7721</span>
-            </div>
-            <div className="flex flex-col gap-0.5">
-              <span className="text-[10px] text-white/50 uppercase tracking-wider">
-                {t("recipe")}:
-              </span>
-              <span className="text-xs text-[#00d4ff] font-bold">
-                R-GLZ-A17
-              </span>
-            </div>
-          </div>
-
-          <div className="bg-[#00ff88]/5 border border-[#00ff88]/20 rounded-lg p-3 mb-3">
-            <div className="text-[10px] text-white/70 mb-1">
-              {t("location")}
-            </div>
-            <div className="text-lg font-bold text-[#00ff88] mb-1 drop-shadow-[0_0_10px_rgba(0,255,136,0.5)]">
-              {stations[currentStationIdx].name[currentLang]}
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-gradient-to-r from-[#00ff88] to-[#00d4ff] transition-all duration-500 shadow-[0_0_10px_rgba(0,255,136,0.8)]"
-                  style={{ width: `${((currentStationIdx + 1) / 7) * 100}%` }}
-                />
-              </div>
-              <span className="text-[10px] text-white/60">
-                {currentStationIdx + 1}/7
-              </span>
-            </div>
-          </div>
-
-          <div className="flex gap-2 flex-wrap">
-            <div className="flex items-center gap-1.5 text-[10px] text-white/80">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#00ff88]" />
-              {t("quality")}
-            </div>
-            <div className="flex items-center gap-1.5 text-[10px] text-white/80">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#00ff88] animate-pulse shadow-[0_0_8px_#00ff88]" />
-              {t("tracking")}
-            </div>
-          </div>
+      {pClockCount === 0 ? (
+        <div className="text-center text-xs text-white/40 py-4">
+          ⏳{" "}
+          {currentLang === "tr"
+            ? "Simülasyonu başlatın..."
+            : "Start simulation..."}
         </div>
+      ) : (
+        <>
+          {/* Tile Info Grid */}
+          <div className="space-y-2 text-xs">
+            <div className="flex justify-between">
+              <span className="text-emerald-300">{t("tileId")}</span>
+              <span className="font-mono text-emerald-400">#{pClockCount}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-emerald-300">{t("lot")}</span>
+              <span className="font-mono">LOT-2024-001</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-emerald-300">{t("order")}</span>
+              <span className="font-mono">ORD-7845</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-emerald-300">{t("recipe")}</span>
+              <span className="font-mono">GLZ-STD-01</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-emerald-300">{t("location")}</span>
+              <span className="font-mono text-emerald-400">
+                {currentStation?.name[currentLang]} ({currentStationIdx + 1}/
+                {STATION_COUNT})
+              </span>
+            </div>
+          </div>
+
+          {/* Quality & Tracking */}
+          <div className="border-t border-emerald-500/20 mt-3 pt-3 space-y-2 text-xs">
+            <div className="flex justify-between">
+              <span className="text-emerald-300">{t("qualityScore")}</span>
+              <span className="text-green-400">92.5%</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-emerald-300">{t("tracking")}</span>
+              <span className="text-emerald-400">{t("realtime")}</span>
+            </div>
+          </div>
+        </>
       )}
     </div>
   );
