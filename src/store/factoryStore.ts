@@ -60,6 +60,9 @@ interface FactoryState {
     pClockCount: number;
     statusMatrix: (string | null)[][]; // 9 rows x 7 cols
     showProductionTable: boolean;
+    wasteCount: number;
+    shipmentCount: number;
+
 
     // Data
     stations: StationData[];
@@ -77,6 +80,9 @@ interface FactoryState {
     setSClockPeriod: (period: number) => void;
     setStationInterval: (interval: number) => void;
     setShowProductionTable: (show: boolean) => void;
+    incrementWasteCount: () => void;
+    incrementShipmentCount: () => void;
+
 
     // Conveyor State
     conveyorSpeed: number;
@@ -220,6 +226,9 @@ export const useFactoryStore = create<FactoryState>((set) => ({
     pClockCount: 0,
     statusMatrix: Array(9).fill(null).map(() => Array(7).fill(null)),
     showProductionTable: true,
+    wasteCount: 0,
+    shipmentCount: 0,
+
 
     setLanguage: (lang) => set({ currentLang: lang }),
     toggleDataFlow: () => set((state) => ({ 
@@ -234,6 +243,9 @@ export const useFactoryStore = create<FactoryState>((set) => ({
     setSClockPeriod: (period) => set({ sClockPeriod: period }),
     setStationInterval: (interval) => set({ stationInterval: interval }),
     setShowProductionTable: (show) => set({ showProductionTable: show }),
+    incrementWasteCount: () => set((state) => ({ wasteCount: state.wasteCount + 1 })),
+    incrementShipmentCount: () => set((state) => ({ shipmentCount: state.shipmentCount + 1 })),
+
 
     // Called by System Timer only — no guard needed (timer handles that)
     advanceSClock: () => set((state) => {
@@ -260,12 +272,28 @@ export const useFactoryStore = create<FactoryState>((set) => ({
             nextStatusMatrix = [currentOccupancy, ...nextStatusMatrix.slice(0, 8)];
         }
 
-        // Randomize KPIs slightly
-        const newKpis = state.kpis.map(kpi => {
+        // 1. Randomize base KPIs slightly for visual 'noise'
+        let newKpis = state.kpis.map(kpi => {
+            if (kpi.id === 'oee') return kpi; // Skip OEE calculation for now
             const val = parseFloat(kpi.value);
-            const variation = (Math.random() - 0.5) * 0.5;
+            const variation = (Math.random() - 0.5) * 0.2;
             return { ...kpi, value: (val + variation).toFixed(1) };
         });
+
+        // 2. Calculate Real-time OEE
+        // OEE = Availability * Performance * Quality
+        const availability = 0.96; // Simulated 96% uptime
+        const DESIGN_SPEED = 2.0; // Benchmark for 100% performance
+        const performance = Math.min(1.0, state.conveyorSpeed / DESIGN_SPEED); 
+        const ftqKpi = newKpis.find(k => k.id === 'ftq');
+        const quality = ftqKpi ? parseFloat(ftqKpi.value) / 100 : 0.92;
+
+        const calculatedOEE = Math.min(100, availability * performance * quality * 100).toFixed(1);
+
+        // 3. Update OEE in the KPI array
+        newKpis = newKpis.map(kpi => 
+            kpi.id === 'oee' ? { ...kpi, value: calculatedOEE } : kpi
+        );
 
         // Randomize defects slightly
         const newDefects = state.defects.map(d => ({
@@ -355,6 +383,9 @@ export const useFactoryStore = create<FactoryState>((set) => ({
         resetVersion: state.resetVersion + 1,
         showPassport: false,
         showHeatmap: false,
-        showControlPanel: false
+        showControlPanel: false,
+        wasteCount: 0,
+        shipmentCount: 0
     }))
+
 }));

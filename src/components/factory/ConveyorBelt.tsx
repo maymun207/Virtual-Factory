@@ -122,8 +122,8 @@ function PartSpawner({
 
   const [partIds, setPartIds] = useState<number[]>([]);
   const partsRef = useRef<Map<number, PartData>>(new Map());
-
-  const conveyorSpeed = useFactoryStore((state) => state.conveyorSpeed);
+  const { conveyorSpeed, incrementWasteCount, incrementShipmentCount } =
+    useFactoryStore();
 
   // Single source of truth for velocity
   const visualVelocity = useMemo(
@@ -162,13 +162,17 @@ function PartSpawner({
           1,
           p.sortProgress + delta * visualVelocity * 10,
         );
-        if (p.sortProgress >= 1) idsToRemove.push(id);
+        if (p.sortProgress >= 1) {
+          idsToRemove.push(id);
+        }
       } else if (p.isCollected) {
         p.collectProgress = Math.min(
           1,
           p.collectProgress + delta * visualVelocity * 12,
         );
-        if (p.collectProgress >= 1) idsToRemove.push(id);
+        if (p.collectProgress >= 1) {
+          idsToRemove.push(id);
+        }
       } else {
         p.t += delta * visualVelocity;
         p.scale = Math.min(1, p.scale + delta * 2);
@@ -176,14 +180,18 @@ function PartSpawner({
         if (p.isDefected && p.t >= SORT_THRESHOLD && !p.isSorted) {
           p.isSorted = true;
           p.originalPos.copy(curve.getPointAt(p.t));
+          incrementWasteCount();
         }
 
         if (!p.isDefected && p.t >= COLLECT_THRESHOLD && !p.isCollected) {
           p.isCollected = true;
           p.originalPos.copy(curve.getPointAt(Math.min(p.t, 0.49)));
+          incrementShipmentCount();
         }
 
-        if (p.t >= END_OF_LINE_T) idsToRemove.push(id);
+        if (p.t >= END_OF_LINE_T && !p.isSorted && !p.isCollected) {
+          idsToRemove.push(id);
+        }
       }
     });
 
