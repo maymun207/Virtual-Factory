@@ -47,13 +47,7 @@ export const ProductionTable3D = () => {
         ]}
       >
         {/* P_clk Header */}
-        <Text
-          fontSize={0.32}
-          color="#fbbf24"
-          font="/fonts/Inter-Bold.woff"
-          anchorX="center"
-          anchorY="middle"
-        >
+        <Text fontSize={0.32} color="#fbbf24" anchorX="center" anchorY="middle">
           {currentLang === "tr" ? "SAAT" : "CLOCK"}
         </Text>
 
@@ -64,7 +58,6 @@ export const ProductionTable3D = () => {
             position={[(i + 1) * cellWidth, 0, 0]}
             fontSize={0.28}
             color={station.color}
-            font="/fonts/Inter-Bold.woff"
             anchorX="center"
             anchorY="middle"
             maxWidth={cellWidth * 0.9}
@@ -127,11 +120,6 @@ export const ProductionTable3D = () => {
                   position={[(cIdx + 1) * cellWidth, 0, 0]}
                   fontSize={0.24}
                   color={rIdx === 0 ? "#00ff88" : cell ? "#ffffff" : "#222"}
-                  font={
-                    rIdx === 0
-                      ? "/fonts/Inter-Bold.woff"
-                      : "/fonts/Inter-Regular.woff"
-                  }
                   anchorX="center"
                   anchorY="middle"
                 >
