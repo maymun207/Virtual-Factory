@@ -1,6 +1,6 @@
 /**
  * DefectHeatmap — Defect visualization panel.
- * Uses shared hooks. No dead state variables.
+ * Uses top/left positioning via panelIndex=2.
  */
 import { useKPIStore } from "../../store/kpiStore";
 import { useUIStore } from "../../store/uiStore";
@@ -9,7 +9,6 @@ import { useDraggablePanel } from "../../hooks/useDraggablePanel";
 import {
   DEFECT_THRESHOLD_HIGH,
   DEFECT_THRESHOLD_MEDIUM,
-  PANEL_MIN_WIDTHS,
 } from "../../lib/params";
 
 export const DefectHeatmap = () => {
@@ -19,8 +18,7 @@ export const DefectHeatmap = () => {
   const currentLang = useUIStore((s) => s.currentLang);
 
   const t = useTranslation("defects");
-  const { position, width, handleMouseDown } =
-    useDraggablePanel("btn-defect-heatmap");
+  const { position, width, handleMouseDown } = useDraggablePanel(2);
 
   if (!showHeatmap) return null;
 
@@ -34,11 +32,14 @@ export const DefectHeatmap = () => {
 
   return (
     <div
-      className="fixed z-50 bg-black/95 border border-emerald-500/30 rounded-xl p-4 text-white shadow-2xl backdrop-blur-xl"
+      className="fixed z-50 bg-black/95 border border-emerald-500/30 rounded-xl p-3 sm:p-4 text-white shadow-2xl backdrop-blur-xl"
       style={{
-        left: position.x,
-        bottom: position.y,
-        width: Math.max(width, PANEL_MIN_WIDTHS.defectHeatmap),
+        top: position.top,
+        left: position.left,
+        width,
+        maxWidth: "90vw",
+        maxHeight: "calc(100vh - 170px)",
+        overflowY: "auto",
       }}
     >
       {/* Drag Handle */}
@@ -62,7 +63,7 @@ export const DefectHeatmap = () => {
             key={defect.name}
             className={`p-2.5 rounded-lg border ${getDefectColor(defect.value)} transition-all duration-300`}
           >
-            <div className="text-[10px] opacity-70 mb-1">
+            <div className="text-[0.625rem] opacity-70 mb-1">
               {defect.label[currentLang] || defect.name}
             </div>
             <div className="text-base font-mono font-bold">

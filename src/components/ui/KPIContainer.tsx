@@ -1,12 +1,11 @@
 /**
  * KPIContainer — Key Performance Indicators display panel.
- * Positioned as a bottom popup, toggled via the BottomToolbar.
+ * Uses top/left positioning via panelIndex=1.
  */
 import { useKPIStore } from "../../store/kpiStore";
 import { useUIStore } from "../../store/uiStore";
 import { useTranslation } from "../../hooks/useTranslation";
 import { useDraggablePanel } from "../../hooks/useDraggablePanel";
-import { PANEL_MIN_WIDTHS } from "../../lib/params";
 
 export const KPIContainer = () => {
   const kpis = useKPIStore((s) => s.kpis);
@@ -15,18 +14,20 @@ export const KPIContainer = () => {
   const toggleKPI = useUIStore((s) => s.toggleKPI);
   const t = useTranslation("kpiPane");
 
-  const { position, width, handleMouseDown } =
-    useDraggablePanel("btn-kpi-panel");
+  const { position, width, handleMouseDown } = useDraggablePanel(1);
 
   if (!showKPI) return null;
 
   return (
     <div
-      className="fixed z-50 bg-black/95 border border-emerald-500/30 rounded-xl p-4 text-white shadow-2xl backdrop-blur-xl"
+      className="fixed z-50 bg-black/95 border border-emerald-500/30 rounded-xl p-3 sm:p-4 text-white shadow-2xl backdrop-blur-xl"
       style={{
-        left: position.x,
-        bottom: position.y,
-        width: Math.max(width, PANEL_MIN_WIDTHS.kpiContainer),
+        top: position.top,
+        left: position.left,
+        width,
+        maxWidth: "90vw",
+        maxHeight: "calc(100vh - 170px)",
+        overflowY: "auto",
       }}
     >
       {/* Drag Handle */}
@@ -48,12 +49,12 @@ export const KPIContainer = () => {
             className="flex items-center justify-between py-1.5 px-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
           >
             <div>
-              <span className="text-[9px] text-white/60 block leading-tight">
+              <span className="text-[0.5625rem] text-white/60 block leading-tight">
                 {kpi.label[currentLang]}
               </span>
               <span className="text-sm font-mono font-bold text-white leading-tight">
                 {kpi.value}
-                <span className="text-[8px] text-white/40 ml-0.5">
+                <span className="text-[0.5rem] text-white/40 ml-0.5">
                   {kpi.unit}
                 </span>
               </span>

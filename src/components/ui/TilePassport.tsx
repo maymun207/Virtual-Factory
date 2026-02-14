@@ -1,16 +1,12 @@
 /**
  * TilePassport — Shows detail view for a specific tile.
- * Uses shared hooks. No dead state variables.
+ * Uses top/left positioning via panelIndex=0.
  */
 import { useSimulationStore } from "../../store/simulationStore";
 import { useUIStore } from "../../store/uiStore";
 import { useTranslation } from "../../hooks/useTranslation";
 import { useDraggablePanel } from "../../hooks/useDraggablePanel";
-import {
-  STATION_COUNT,
-  TILE_PASSPORT_DEFAULTS,
-  PANEL_MIN_WIDTHS,
-} from "../../lib/params";
+import { STATION_COUNT, TILE_PASSPORT_DEFAULTS } from "../../lib/params";
 
 export const TilePassport = () => {
   const pClockCount = useSimulationStore((s) => s.pClockCount);
@@ -20,8 +16,7 @@ export const TilePassport = () => {
   const currentLang = useUIStore((s) => s.currentLang);
 
   const t = useTranslation("tilePassport");
-  const { position, width, handleMouseDown } =
-    useDraggablePanel("btn-tile-passport");
+  const { position, width, handleMouseDown } = useDraggablePanel(0);
 
   if (!showPassport) return null;
 
@@ -31,11 +26,14 @@ export const TilePassport = () => {
 
   return (
     <div
-      className="fixed z-50 bg-black/95 border border-emerald-500/30 rounded-xl p-4 text-white shadow-2xl backdrop-blur-xl"
+      className="fixed z-50 bg-black/95 border border-emerald-500/30 rounded-xl p-3 sm:p-4 text-white shadow-2xl backdrop-blur-xl"
       style={{
-        left: position.x,
-        bottom: position.y,
-        width: Math.max(width, PANEL_MIN_WIDTHS.tilePassport),
+        top: position.top,
+        left: position.left,
+        width,
+        maxWidth: "90vw",
+        maxHeight: "calc(100vh - 170px)",
+        overflowY: "auto",
       }}
     >
       {/* Drag Handle */}

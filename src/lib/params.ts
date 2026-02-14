@@ -1,6 +1,6 @@
 /**
  * ╔═══════════════════════════════════════════════════════════════════╗
- * ║                  CENTRALIZED PARAMETER MODULE                    ║
+ * ║                  CENTRALIZED PARAMETER MODULE                     ║
  * ║                                                                   ║
  * ║  Single source of truth for EVERY parameter, constant, initial    ║
  * ║  value, color, dimension, and magic number in the project.        ║
@@ -596,14 +596,21 @@ export const TILE_PASSPORT_DEFAULTS = {
 // ═══════════════════════════════════════════════════════════════════
 
 export const PANEL_MIN_WIDTHS = {
-  tilePassport: 280,
-  defectHeatmap: 300,
+  tilePassport: 260,
+  defectHeatmap: 260,
   kpiContainer: 260,
 } as const;
 
-export const PANEL_DEFAULT_POSITION: { x: number; y: number } = { x: 0, y: 120 };
-export const PANEL_DEFAULT_WIDTH = 320;
-export const PANEL_ANCHOR_OFFSET = 20;
+/** Minimum top offset (px) to clear the header */
+export const PANEL_HEADER_CLEARANCE = 70;
+/** Horizontal gap between cascaded panels */
+export const PANEL_CASCADE_X = 268;
+/** Default panel width (px) */
+export const PANEL_DEFAULT_WIDTH = 260;
+/** Margin from viewport edges (px) */
+export const PANEL_EDGE_MARGIN = 12;
+/** Minimum clearance from bottom for toolbar (px) */
+export const PANEL_BOTTOM_CLEARANCE = 100;
 export const CONTROL_PANEL_GAP = 8;
 
 // ═══════════════════════════════════════════════════════════════════
