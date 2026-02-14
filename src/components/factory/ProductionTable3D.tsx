@@ -7,17 +7,21 @@ export const ProductionTable3D = () => {
   const stations = useFactoryStore((state) => state.stations);
   const currentLang = useFactoryStore((state) => state.currentLang);
 
-  const tableWidth = 28;
+  // Layout Constants (Based on Scene.tsx station positions)
+  const stationX = [-12, -8, -4, 0, 4, 8, 12];
+  const clockX = -15.5;
+  const vLinesBoundaries = [-17, -14, -10, -6, -2, 2, 6, 10, 14];
+
   const tableHeight = 10;
-  const colCount = 8; // Tick + 7 stations
   const rowCount = 9;
-  const cellWidth = tableWidth / colCount;
   const cellHeight = tableHeight / (rowCount + 1); // +1 for header
+  const tableWidth = 31; // From -17 to 14
+  const centerX = -1.5; // Offset to center the table mesh relative to the group
 
   return (
     <group position={[0, 0.05, 8.5]} rotation={[-Math.PI / 2.5, 0, 0]}>
       {/* Table Base - Semi-transparent Industrial Black */}
-      <mesh receiveShadow>
+      <mesh position={[centerX, 0, 0]} receiveShadow>
         <boxGeometry args={[tableWidth + 0.6, tableHeight + 0.6, 0.1]} />
         <meshStandardMaterial
           color="#0a0a0a"
@@ -29,7 +33,7 @@ export const ProductionTable3D = () => {
       </mesh>
 
       {/* Outer Glow Border */}
-      <mesh position={[0, 0, -0.06]}>
+      <mesh position={[centerX, 0, -0.06]}>
         <boxGeometry args={[tableWidth + 0.8, tableHeight + 0.8, 0.05]} />
         <meshStandardMaterial
           color="#00ff88"
@@ -39,15 +43,15 @@ export const ProductionTable3D = () => {
       </mesh>
 
       {/* Header Row Content */}
-      <group
-        position={[
-          -(tableWidth / 2) + cellWidth / 2,
-          tableHeight / 2 - cellHeight / 2,
-          0.1,
-        ]}
-      >
+      <group position={[0, tableHeight / 2 - cellHeight / 2, 0.1]}>
         {/* P_clk Header */}
-        <Text fontSize={0.32} color="#fbbf24" anchorX="center" anchorY="middle">
+        <Text
+          position={[clockX, 0, 0]}
+          fontSize={0.32}
+          color="#fbbf24"
+          anchorX="center"
+          anchorY="middle"
+        >
           {currentLang === "tr" ? "SAAT" : "CLOCK"}
         </Text>
 
@@ -55,12 +59,12 @@ export const ProductionTable3D = () => {
         {stations.map((station, i) => (
           <Text
             key={station.id}
-            position={[(i + 1) * cellWidth, 0, 0]}
+            position={[stationX[i], 0, 0]}
             fontSize={0.28}
             color={station.color}
             anchorX="center"
             anchorY="middle"
-            maxWidth={cellWidth * 0.9}
+            maxWidth={3.5}
             textAlign="center"
           >
             {station.name[currentLang]}
@@ -72,7 +76,7 @@ export const ProductionTable3D = () => {
       {Array.from({ length: rowCount + 2 }).map((_, i) => (
         <mesh
           key={`h-line-${i}`}
-          position={[0, tableHeight / 2 - i * cellHeight, 0.06]}
+          position={[centerX, tableHeight / 2 - i * cellHeight, 0.06]}
         >
           <planeGeometry args={[tableWidth, 0.025]} />
           <meshBasicMaterial color="#333" transparent opacity={0.5} />
@@ -80,24 +84,15 @@ export const ProductionTable3D = () => {
       ))}
 
       {/* Grid Lines - Vertical */}
-      {Array.from({ length: colCount + 1 }).map((_, i) => (
-        <mesh
-          key={`v-line-${i}`}
-          position={[-(tableWidth / 2) + i * cellWidth, 0, 0.06]}
-        >
+      {vLinesBoundaries.map((x, i) => (
+        <mesh key={`v-line-${i}`} position={[x, 0, 0.06]}>
           <planeGeometry args={[0.025, tableHeight]} />
           <meshBasicMaterial color="#333" transparent opacity={0.5} />
         </mesh>
       ))}
 
       {/* Matrix Data Rows */}
-      <group
-        position={[
-          -(tableWidth / 2) + cellWidth / 2,
-          tableHeight / 2 - cellHeight * 1.5,
-          0.1,
-        ]}
-      >
+      <group position={[0, tableHeight / 2 - cellHeight * 1.5, 0.1]}>
         {statusMatrix.map((row, rIdx) => {
           const displayTick = pClockCount > rIdx ? pClockCount - rIdx : null;
 
@@ -105,6 +100,7 @@ export const ProductionTable3D = () => {
             <group key={`row-${rIdx}`} position={[0, -rIdx * cellHeight, 0]}>
               {/* Tick/Clock ID */}
               <Text
+                position={[clockX, 0, 0]}
                 fontSize={0.26}
                 color={rIdx === 0 ? "#fff" : "#666"}
                 anchorX="center"
@@ -117,7 +113,7 @@ export const ProductionTable3D = () => {
               {row.map((cell, cIdx) => (
                 <Text
                   key={`cell-${rIdx}-${cIdx}`}
-                  position={[(cIdx + 1) * cellWidth, 0, 0]}
+                  position={[stationX[cIdx], 0, 0]}
                   fontSize={0.24}
                   color={rIdx === 0 ? "#00ff88" : cell ? "#ffffff" : "#222"}
                   anchorX="center"
