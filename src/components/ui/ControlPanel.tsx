@@ -20,6 +20,8 @@ export const ControlPanel = () => {
     setCFactor,
     pFactor,
     setPFactor,
+    showProductionTable,
+    setShowProductionTable,
   } = useFactoryStore();
 
   const [position, setPosition] = useState({ x: 0, y: 120 });
@@ -118,55 +120,81 @@ export const ControlPanel = () => {
           />
         </div>
 
-        <div className="space-y-1">
-          <div className="flex justify-between items-center text-[10px] text-white/80 font-bold">
-            <span>
-              {t("s_clk")}: {sClockPeriod}ms
-            </span>
-          </div>
-          <input
-            type="range"
-            min="100"
-            max="2000"
-            step="100"
-            value={sClockPeriod}
-            onChange={(e) => setSClockPeriod(parseInt(e.target.value))}
-            className="w-full h-1.5 bg-white/20 rounded-lg appearance-none cursor-pointer accent-[#00ff88]"
-          />
+        <div className="h-px bg-white/10 my-1" />
+
+        {/* Visibility Toggle */}
+        <div className="flex items-center justify-between py-1">
+          <span className="text-[10px] text-white/80 font-bold">
+            {t("showTable")}
+          </span>
+          <button
+            onClick={() => setShowProductionTable(!showProductionTable)}
+            className={`relative inline-flex h-5 w-10 items-center rounded-full transition-colors duration-200 focus:outline-none ${showProductionTable ? "bg-[#00ff88]" : "bg-gray-700"}`}
+          >
+            <span
+              className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform duration-200 ${showProductionTable ? "translate-x-[22px]" : "translate-x-[4px]"}`}
+            />
+          </button>
         </div>
 
-        <div className="space-y-1">
-          <div className="flex justify-between items-center text-[10px] text-white/80 font-bold">
-            <span>
-              {t("c_factor")}: {cFactor}
-            </span>
-          </div>
-          <input
-            type="range"
-            min="1"
-            max="20"
-            step="1"
-            value={cFactor}
-            onChange={(e) => setCFactor(parseInt(e.target.value))}
-            className="w-full h-1.5 bg-white/20 rounded-lg appearance-none cursor-pointer accent-[#00ff88]"
-          />
+        <div className="h-px bg-white/10 my-1" />
+
+        <div className="text-[9px] text-[#00ff88]/60 font-bold uppercase tracking-widest px-1">
+          {t("simParams")}
         </div>
 
-        <div className="space-y-1">
-          <div className="flex justify-between items-center text-[10px] text-white/80 font-bold">
-            <span>
-              {t("p_factor")}: {pFactor}
-            </span>
+        {/* Simulation Sliders */}
+        <div className="space-y-3 pt-1">
+          <div className="space-y-1">
+            <div className="flex justify-between items-center text-[10px] text-white/80 font-bold">
+              <span>
+                {t("s_clk")}: {sClockPeriod}ms
+              </span>
+            </div>
+            <input
+              type="range"
+              min="100"
+              max="2000"
+              step="100"
+              value={sClockPeriod}
+              onChange={(e) => setSClockPeriod(parseInt(e.target.value))}
+              className="w-full h-1.5 bg-white/20 rounded-lg appearance-none cursor-pointer accent-[#00ff88]"
+            />
           </div>
-          <input
-            type="range"
-            min="1"
-            max="20"
-            step="1"
-            value={pFactor}
-            onChange={(e) => setPFactor(parseInt(e.target.value))}
-            className="w-full h-1.5 bg-white/20 rounded-lg appearance-none cursor-pointer accent-[#00ff88]"
-          />
+
+          <div className="space-y-1">
+            <div className="flex justify-between items-center text-[10px] text-white/80 font-bold">
+              <span>
+                {t("c_factor")}: {cFactor}
+              </span>
+            </div>
+            <input
+              type="range"
+              min="1"
+              max="20"
+              step="1"
+              value={cFactor}
+              onChange={(e) => setCFactor(parseInt(e.target.value))}
+              className="w-full h-1.5 bg-white/20 rounded-lg appearance-none cursor-pointer accent-[#00ff88]"
+            />
+          </div>
+
+          <div className="space-y-1">
+            <div className="flex justify-between items-center text-[10px] text-white/80 font-bold">
+              <span>
+                {t("p_factor")}: {pFactor}
+              </span>
+            </div>
+            <input
+              type="range"
+              min="1"
+              max="20"
+              step="1"
+              value={pFactor}
+              onChange={(e) => setPFactor(parseInt(e.target.value))}
+              className="w-full h-1.5 bg-white/20 rounded-lg appearance-none cursor-pointer accent-[#00ff88]"
+            />
+          </div>
         </div>
 
         {/* Status Buttons */}

@@ -14,7 +14,9 @@ export const translations = {
         conveyorSpeed: { tr: 'Konveyör Hızı', en: 'Conveyor Speed' },
         s_clk: { tr: 'S_clk (Simülatör Periyodu)', en: 'S_clk (Simulator Period)' },
         c_factor: { tr: 'C_factor (Konveyör Adımı)', en: 'C_factor (Conveyor Step)' },
-        p_factor: { tr: 'P_factor (Üretim Periyodu)', en: 'P_factor (Production Period)' }
+        p_factor: { tr: 'P_factor (Üretim Periyodu)', en: 'P_factor (Production Period)' },
+        showTable: { tr: '📊 Üretim Tablosunu Göster', en: '📊 Show Production Table' },
+        simParams: { tr: '⚙️ Simülasyon Parametreleri', en: '⚙️ Simulation Parameters' }
     },
     tilePassport: {
         title: { tr: '📔 Tile Passport - Canlı İzleme', en: '📔 Tile Passport - Live Tracking' },

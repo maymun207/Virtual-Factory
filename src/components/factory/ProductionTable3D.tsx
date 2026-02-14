@@ -6,6 +6,11 @@ export const ProductionTable3D = () => {
   const pClockCount = useFactoryStore((state) => state.pClockCount);
   const stations = useFactoryStore((state) => state.stations);
   const currentLang = useFactoryStore((state) => state.currentLang);
+  const showProductionTable = useFactoryStore(
+    (state) => state.showProductionTable,
+  );
+
+  if (!showProductionTable) return null;
 
   // Layout Constants (Based on Scene.tsx station positions)
   const stationX = [-12, -8, -4, 0, 4, 8, 12];

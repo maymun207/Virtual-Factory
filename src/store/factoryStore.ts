@@ -54,6 +54,7 @@ interface FactoryState {
     sClockCount: number;
     pClockCount: number;
     statusMatrix: (string | null)[][]; // 9 rows x 7 cols
+    showProductionTable: boolean;
 
     // Data
     stations: StationData[];
@@ -72,6 +73,7 @@ interface FactoryState {
     setSClockPeriod: (period: number) => void;
     setCFactor: (factor: number) => void;
     setPFactor: (factor: number) => void;
+    setShowProductionTable: (show: boolean) => void;
 
     // Conveyor State
     conveyorSpeed: number;
@@ -220,6 +222,7 @@ export const useFactoryStore = create<FactoryState>((set) => ({
     sClockCount: 0,
     pClockCount: 0,
     statusMatrix: Array(9).fill(null).map(() => Array(7).fill(null)),
+    showProductionTable: true,
 
     setLanguage: (lang) => set({ currentLang: lang }),
     toggleDataFlow: () => set((state) => ({ 
@@ -235,6 +238,7 @@ export const useFactoryStore = create<FactoryState>((set) => ({
     setSClockPeriod: (period) => set({ sClockPeriod: period }),
     setCFactor: (factor) => set({ cFactor: factor }),
     setPFactor: (factor) => set({ pFactor: factor }),
+    setShowProductionTable: (show) => set({ showProductionTable: show }),
 
     updateSimulation: () => set((state) => {
         if (!state.isDataFlowing) return state;
