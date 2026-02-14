@@ -1,5 +1,51 @@
+import { memo } from "react";
 import { Text } from "@react-three/drei";
 import { useFactoryStore } from "../../store/factoryStore";
+
+const TableRow = memo(
+  ({
+    rIdx,
+    row,
+    displayTick,
+    stationX,
+    clockX,
+  }: {
+    rIdx: number;
+    row: (string | null)[];
+    displayTick: number | null;
+    stationX: number[];
+    clockX: number;
+  }) => {
+    return (
+      <group position={[0, -rIdx * (10 / 10), 0]}>
+        {/* Tick/Clock ID */}
+        <Text
+          position={[clockX, 0, 0]}
+          fontSize={0.26}
+          color={rIdx === 0 ? "#fff" : "#666"}
+          anchorX="center"
+          anchorY="middle"
+        >
+          {displayTick ? `P_clk -> ${displayTick}` : "-"}
+        </Text>
+
+        {/* Station Occupancy Cells */}
+        {row.map((cell, cIdx) => (
+          <Text
+            key={`cell-${rIdx}-${cIdx}`}
+            position={[stationX[cIdx], 0, 0]}
+            fontSize={0.24}
+            color={rIdx === 0 ? "#00ff88" : cell ? "#ffffff" : "#222"}
+            anchorX="center"
+            anchorY="middle"
+          >
+            {cell || "-"}
+          </Text>
+        ))}
+      </group>
+    );
+  },
+);
 
 export const ProductionTable3D = () => {
   const statusMatrix = useFactoryStore((state) => state.statusMatrix);
@@ -102,32 +148,14 @@ export const ProductionTable3D = () => {
           const displayTick = pClockCount > rIdx ? pClockCount - rIdx : null;
 
           return (
-            <group key={`row-${rIdx}`} position={[0, -rIdx * cellHeight, 0]}>
-              {/* Tick/Clock ID */}
-              <Text
-                position={[clockX, 0, 0]}
-                fontSize={0.26}
-                color={rIdx === 0 ? "#fff" : "#666"}
-                anchorX="center"
-                anchorY="middle"
-              >
-                {displayTick ? `P_clk -> ${displayTick}` : "-"}
-              </Text>
-
-              {/* Station Occupancy Cells */}
-              {row.map((cell, cIdx) => (
-                <Text
-                  key={`cell-${rIdx}-${cIdx}`}
-                  position={[stationX[cIdx], 0, 0]}
-                  fontSize={0.24}
-                  color={rIdx === 0 ? "#00ff88" : cell ? "#ffffff" : "#222"}
-                  anchorX="center"
-                  anchorY="middle"
-                >
-                  {cell || "-"}
-                </Text>
-              ))}
-            </group>
+            <TableRow
+              key={`row-${rIdx}`}
+              rIdx={rIdx}
+              row={row}
+              displayTick={displayTick}
+              stationX={stationX}
+              clockX={clockX}
+            />
           );
         })}
       </group>

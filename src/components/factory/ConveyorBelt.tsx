@@ -1,10 +1,17 @@
-import { useRef, useMemo, useState } from "react";
+import { useRef, useMemo, useState, useEffect } from "react";
 import { useFrame } from "@react-three/fiber";
-import { Text, Billboard } from "@react-three/drei";
+import { Text } from "@react-three/drei";
 import * as THREE from "three";
 import { useFactoryStore } from "../../store/factoryStore";
-
-const SLAT_COUNT = 100;
+import { computeBaseVelocity } from "../../system-timer/useSystemTimer";
+import {
+  SLAT_COUNT,
+  SPAWN_T,
+  SORT_THRESHOLD,
+  COLLECT_THRESHOLD,
+  END_OF_LINE_T,
+  DEFECT_PROBABILITY,
+} from "../../lib/constants";
 
 interface PartData {
   id: number;
@@ -28,7 +35,7 @@ function Part({
   const meshRef = useRef<THREE.Group>(null);
 
   useFrame(() => {
-    if (!meshRef.current) return;
+    if (!meshRef.current || !data) return;
 
     if (data.isSorted) {
       // Throw animation logic (defective → trash)
@@ -88,137 +95,139 @@ function Part({
           metalness={0.1}
         />
       </mesh>
-      <Billboard position={[0, 0.25, 0]}>
-        <Text
-          fontSize={0.3}
-          color="black"
-          anchorX="center"
-          anchorY="middle"
-          outlineWidth={0.01}
-          outlineColor="white"
-        >
-          {data.id}
-        </Text>
-      </Billboard>
+      <Text
+        position={[0, 0.04, 0]}
+        rotation={[-Math.PI / 2, 0, 0]}
+        fontSize={0.4}
+        color="black"
+        anchorX="center"
+        anchorY="middle"
+      >
+        {data.id}
+      </Text>
     </group>
   );
 }
 
 function PartSpawner({
   curve,
-  speed,
   status,
 }: {
   curve: THREE.CatmullRomCurve3;
-  speed: number;
   status: string;
 }) {
-  const [parts, setParts] = useState<PartData[]>([]);
-  const lastSpawnTime = useRef(0);
-  const partCounter = useRef(1);
+  const pClockCount = useFactoryStore((state) => state.pClockCount);
+  const sClockPeriod = useFactoryStore((state) => state.sClockPeriod);
+  const stationInterval = useFactoryStore((state) => state.stationInterval);
 
-  const SPAWN_T = 0.0625;
+  const [partIds, setPartIds] = useState<number[]>([]);
+  const partsRef = useRef<Map<number, PartData>>(new Map());
 
-  useFrame(({ clock }, delta) => {
+  const conveyorSpeed = useFactoryStore((state) => state.conveyorSpeed);
+
+  // Single source of truth for velocity
+  const visualVelocity = useMemo(
+    () => computeBaseVelocity(sClockPeriod, stationInterval) * conveyorSpeed,
+    [sClockPeriod, stationInterval, conveyorSpeed],
+  );
+
+  // Interlocked Spawning Logic
+  useEffect(() => {
+    if (status !== "running" || pClockCount === 0) return;
+
+    const id = pClockCount; // Use pClockCount as ID for visual/logic sync
+    const newPart: PartData = {
+      id,
+      t: SPAWN_T,
+      isDefected: Math.random() < DEFECT_PROBABILITY,
+      isSorted: false,
+      sortProgress: 0,
+      isCollected: false,
+      collectProgress: 0,
+      originalPos: new THREE.Vector3(),
+      scale: 0,
+    };
+    partsRef.current.set(id, newPart);
+    setPartIds((prev) => [...prev, id]);
+  }, [pClockCount, status]);
+
+  useFrame((_, delta) => {
     if (status !== "running") return;
 
-    const time = clock.elapsedTime;
-    const spawnInterval = (1.0 - ((speed - 0.3) / 1.7) * 0.5) / 0.77;
+    // 2. Movement logic (Imperative)
+    const idsToRemove: number[] = [];
+    partsRef.current.forEach((p, id) => {
+      if (p.isSorted) {
+        p.sortProgress = Math.min(
+          1,
+          p.sortProgress + delta * visualVelocity * 10,
+        );
+        if (p.sortProgress >= 1) idsToRemove.push(id);
+      } else if (p.isCollected) {
+        p.collectProgress = Math.min(
+          1,
+          p.collectProgress + delta * visualVelocity * 12,
+        );
+        if (p.collectProgress >= 1) idsToRemove.push(id);
+      } else {
+        p.t += delta * visualVelocity;
+        p.scale = Math.min(1, p.scale + delta * 2);
 
-    // Spawning logic
-    if (time - lastSpawnTime.current > spawnInterval) {
-      const newPart: PartData = {
-        id: partCounter.current++,
-        t: SPAWN_T,
-        isDefected: Math.random() < 0.05,
-        isSorted: false,
-        sortProgress: 0,
-        isCollected: false,
-        collectProgress: 0,
-        originalPos: new THREE.Vector3(),
-        scale: 0,
-      };
-      setParts((prev) => [...prev, newPart]);
-      lastSpawnTime.current = time;
+        if (p.isDefected && p.t >= SORT_THRESHOLD && !p.isSorted) {
+          p.isSorted = true;
+          p.originalPos.copy(curve.getPointAt(p.t));
+        }
+
+        if (!p.isDefected && p.t >= COLLECT_THRESHOLD && !p.isCollected) {
+          p.isCollected = true;
+          p.originalPos.copy(curve.getPointAt(Math.min(p.t, 0.49)));
+        }
+
+        if (p.t >= END_OF_LINE_T) idsToRemove.push(id);
+      }
+    });
+
+    // 3. Removal logic
+    if (idsToRemove.length > 0) {
+      idsToRemove.forEach((id) => partsRef.current.delete(id));
+      setPartIds((prev) => prev.filter((id) => partsRef.current.has(id)));
     }
 
-    // Movement & Animation logic
-    setParts((prev) => {
-      const nextParts = prev
-        .map((p) => {
-          if (p.isSorted) {
-            const newSortProgress = Math.min(
-              1,
-              p.sortProgress + delta * speed * 0.5,
-            );
-            return { ...p, sortProgress: newSortProgress };
-          }
-
-          if (p.isCollected) {
-            const newCollectProgress = Math.min(
-              1,
-              p.collectProgress + delta * speed * 0.6,
-            );
-            return { ...p, collectProgress: newCollectProgress };
-          }
-
-          const newT = p.t + delta * speed * 0.05;
-          const newScale = Math.min(1, p.scale + delta * 2);
-
-          // Sorting check (at sorting station t=0.375)
-          if (p.isDefected && newT >= 0.385 && !p.isSorted) {
-            const point = curve.getPointAt(p.t);
-            return {
-              ...p,
-              isSorted: true,
-              originalPos: point.clone(),
-              t: newT,
-              scale: newScale,
-            };
-          }
-
-          // Collection check (after packaging, at end of line)
-          if (!p.isDefected && newT >= 0.47 && !p.isCollected) {
-            const point = curve.getPointAt(Math.min(p.t, 0.49));
-            return {
-              ...p,
-              isCollected: true,
-              originalPos: point.clone(),
-              t: newT,
-              scale: newScale,
-            };
-          }
-
-          return { ...p, t: newT, scale: newScale };
-        })
-        .filter((p) => {
-          if (p.isSorted) return p.sortProgress < 1;
-          if (p.isCollected) return p.collectProgress < 1;
-          return p.t < 0.5;
-        });
-
-      // Update physical ref for high-speed proximity checks (non-rendering store update)
-      useFactoryStore.getState().partPositionsRef.current = nextParts
-        .filter((p) => !p.isSorted)
-        .map((p) => p.t);
-
-      return nextParts;
+    // 4. Physical telemetry update for store matrix snapshots
+    const positions: number[] = [];
+    const ids: number[] = [];
+    partsRef.current.forEach((p) => {
+      if (!p.isSorted) {
+        positions.push(p.t);
+        ids.push(p.id);
+      }
     });
+    useFactoryStore.getState().partPositionsRef.current = positions;
+    useFactoryStore.getState().partIdsRef.current = ids;
   });
 
   return (
     <group>
-      {parts.map((part) => (
-        <Part key={part.id} data={part} curve={curve} />
-      ))}
+      {partIds.map((id) => {
+        const data = partsRef.current.get(id);
+        if (!data) return null;
+        return <Part key={id} data={data} curve={curve} />;
+      })}
     </group>
   );
 }
 
 export const ConveyorBelt = () => {
-  const { conveyorSpeed, conveyorStatus } = useFactoryStore();
+  const { sClockPeriod, stationInterval, conveyorSpeed, conveyorStatus } =
+    useFactoryStore();
   const meshRef = useRef<THREE.InstancedMesh>(null);
   const dummy = useMemo(() => new THREE.Object3D(), []);
+
+  // Visual Slat Speed — uses the same formula as tile movement
+  const visualVelocity = useMemo(
+    () => computeBaseVelocity(sClockPeriod, stationInterval) * conveyorSpeed,
+    [sClockPeriod, stationInterval, conveyorSpeed],
+  );
 
   const curve = useMemo(() => {
     const points = [
@@ -239,8 +248,8 @@ export const ConveyorBelt = () => {
 
     if (conveyorStatus === "running") {
       for (let i = 0; i < SLAT_COUNT; i++) {
-        offsets.current[i] =
-          (offsets.current[i] + delta * conveyorSpeed * 0.05) % 1;
+        // Use the gearRatio directly for perfectly synced visual velocity
+        offsets.current[i] = (offsets.current[i] + delta * visualVelocity) % 1;
       }
     }
 
@@ -273,11 +282,7 @@ export const ConveyorBelt = () => {
         />
       </instancedMesh>
 
-      <PartSpawner
-        curve={curve}
-        speed={conveyorSpeed}
-        status={conveyorStatus}
-      />
+      <PartSpawner curve={curve} status={conveyorStatus} />
     </group>
   );
 };

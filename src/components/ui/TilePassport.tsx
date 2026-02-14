@@ -3,9 +3,11 @@ import { useFactoryStore } from "../../store/factoryStore";
 import { translations } from "../../lib/translations";
 
 export const TilePassport = () => {
-  const { currentLang, tilePosition, stations, showPassport, togglePassport } =
+  const { currentLang, pClockCount, stations, showPassport, togglePassport } =
     useFactoryStore();
   const [minimized] = useState(false);
+  // Derive a tile's current station index from pClockCount (cycles through stations)
+  const currentStationIdx = pClockCount > 0 ? (pClockCount - 1) % 7 : 0;
 
   const [position, setPosition] = useState({ x: 0, y: 100 });
   const [width, setWidth] = useState(320);
@@ -127,17 +129,17 @@ export const TilePassport = () => {
               {t("location")}
             </div>
             <div className="text-lg font-bold text-[#00ff88] mb-1 drop-shadow-[0_0_10px_rgba(0,255,136,0.5)]">
-              {stations[tilePosition].name[currentLang]}
+              {stations[currentStationIdx].name[currentLang]}
             </div>
             <div className="flex items-center gap-2">
               <div className="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden">
                 <div
                   className="h-full bg-gradient-to-r from-[#00ff88] to-[#00d4ff] transition-all duration-500 shadow-[0_0_10px_rgba(0,255,136,0.8)]"
-                  style={{ width: `${((tilePosition + 1) / 7) * 100}%` }}
+                  style={{ width: `${((currentStationIdx + 1) / 7) * 100}%` }}
                 />
               </div>
               <span className="text-[10px] text-white/60">
-                {tilePosition + 1}/7
+                {currentStationIdx + 1}/7
               </span>
             </div>
           </div>

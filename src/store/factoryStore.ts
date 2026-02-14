@@ -1,5 +1,12 @@
 import { create } from 'zustand';
 import { supabase } from '../lib/supabaseClient';
+import {
+    STATION_STAGES,
+    SNAPSHOT_TOLERANCE,
+    DEFAULT_S_CLOCK_PERIOD,
+    DEFAULT_STATION_INTERVAL,
+    DEFAULT_CONVEYOR_SPEED
+} from '../lib/constants';
 
 
 export type Language = 'tr' | 'en';
@@ -45,12 +52,10 @@ interface FactoryState {
     showControlPanel: boolean;
 
     // Simulation State
-    tilePosition: number; 
-    partPositions: number[]; 
     partPositionsRef: { current: number[] };
+    partIdsRef: { current: number[] }; // Store IDs for matrix snapshots
     sClockPeriod: number;
-    cFactor: number;
-    pFactor: number;
+    stationInterval: number; // S_clk ticks per station (spawn + traversal)
     sClockCount: number;
     pClockCount: number;
     statusMatrix: (string | null)[][]; // 9 rows x 7 cols
@@ -68,22 +73,16 @@ interface FactoryState {
     togglePassport: () => void;
     toggleHeatmap: () => void;
     toggleControlPanel: () => void;
-    updateSimulation: () => void;
-    setPartPositions: (positions: number[]) => void;
+    advanceSClock: () => void; // Called by System Timer only
     setSClockPeriod: (period: number) => void;
-    setCFactor: (factor: number) => void;
-    setPFactor: (factor: number) => void;
+    setStationInterval: (interval: number) => void;
     setShowProductionTable: (show: boolean) => void;
 
     // Conveyor State
     conveyorSpeed: number;
     conveyorStatus: 'running' | 'stopped' | 'jammed';
-    activeParts: { id: number; t: number; isDefected: boolean; label: string | number }[];
     setConveyorSpeed: (speed: number) => void;
     setConveyorStatus: (status: 'running' | 'stopped' | 'jammed') => void;
-    addPart: (part: { id: number; t: number; isDefected: boolean; label: string | number }) => void;
-    updatePart: (id: number, t: number, isDefected?: boolean) => void;
-    removePart: (id: number) => void;
 
     // Telemetry
     telemetryInterval: ReturnType<typeof setInterval> | null;
@@ -209,16 +208,14 @@ export const useFactoryStore = create<FactoryState>((set) => ({
     showPassport: false,
     showHeatmap: false,
     showControlPanel: false,
-    tilePosition: 0,
-    partPositions: [],
     partPositionsRef: { current: [] },
+    partIdsRef: { current: [] },
     stations: INITIAL_STATIONS,
     kpis: INITIAL_KPIS,
     defects: INITIAL_DEFECTS,
     resetVersion: 0,
-    sClockPeriod: 500,
-    cFactor: 4,
-    pFactor: 4,
+    sClockPeriod: DEFAULT_S_CLOCK_PERIOD,
+    stationInterval: DEFAULT_STATION_INTERVAL,
     sClockCount: 0,
     pClockCount: 0,
     statusMatrix: Array(9).fill(null).map(() => Array(7).fill(null)),
@@ -234,50 +231,33 @@ export const useFactoryStore = create<FactoryState>((set) => ({
     toggleHeatmap: () => set((state) => ({ showHeatmap: !state.showHeatmap })),
     toggleControlPanel: () => set((state) => ({ showControlPanel: !state.showControlPanel })),
     
-    setPartPositions: (positions) => set({ partPositions: positions }),
     setSClockPeriod: (period) => set({ sClockPeriod: period }),
-    setCFactor: (factor) => set({ cFactor: factor }),
-    setPFactor: (factor) => set({ pFactor: factor }),
+    setStationInterval: (interval) => set({ stationInterval: interval }),
     setShowProductionTable: (show) => set({ showProductionTable: show }),
 
-    updateSimulation: () => set((state) => {
-        if (!state.isDataFlowing) return state;
-
+    // Called by System Timer only — no guard needed (timer handles that)
+    advanceSClock: () => set((state) => {
         const nextSClockCount = state.sClockCount + 1;
         let nextPClockCount = state.pClockCount;
         let nextStatusMatrix = [...state.statusMatrix];
-        let nextActiveParts = [...state.activeParts];
 
-        // 1. Press Clock (P_clk) - Production
-        const isPressTick = nextSClockCount % state.pFactor === 0;
+        // P_clk tick: fires every stationInterval S_clk ticks
+        const isPressTick = nextSClockCount % state.stationInterval === 0;
         if (isPressTick) {
             nextPClockCount += 1;
-            const newPart = {
-                id: nextPClockCount,
-                t: 0.0625, // First station: Press
-                isDefected: Math.random() < 0.05,
-                label: `Tile #${nextPClockCount}`
-            };
-            nextActiveParts = [newPart, ...nextActiveParts];
 
-            // Capture snapshot for matrix
-            const stationStages = [0.0625, 0.125, 0.1875, 0.25, 0.3125, 0.375, 0.4375];
-            const currentOccupancy = stationStages.map((stage) => {
-                const part = nextActiveParts.find(p => Math.abs(p.t - stage) < 0.02);
-                return part ? `Tile #${part.id}` : null;
+            // Snapshot occupancy from physical positions
+            const currentOccupancy = STATION_STAGES.map((stage, idx) => {
+                if (idx === 0) return `Tile #${nextPClockCount}`;
+                const partIdx = state.partPositionsRef.current
+                    .findIndex(t => Math.abs(t - stage) < SNAPSHOT_TOLERANCE);
+                const partId = partIdx !== -1
+                    ? state.partIdsRef.current[partIdx]
+                    : null;
+                return partId ? `Tile #${partId}` : null;
             });
 
-            // Shift history
             nextStatusMatrix = [currentOccupancy, ...nextStatusMatrix.slice(0, 8)];
-        }
-
-        // 2. Conveyor Clock (C_clk) - Movement
-        const isConveyorTick = nextSClockCount % state.cFactor === 0;
-        if (isConveyorTick) {
-            const stationJump = 0.0625; // Distance to next station
-            nextActiveParts = nextActiveParts
-                .map(p => ({ ...p, t: p.t + stationJump }))
-                .filter(p => p.t <= 1);
         }
 
         // Randomize KPIs slightly
@@ -297,7 +277,6 @@ export const useFactoryStore = create<FactoryState>((set) => ({
             sClockCount: nextSClockCount,
             pClockCount: nextPClockCount,
             statusMatrix: nextStatusMatrix,
-            activeParts: nextActiveParts,
             kpis: newKpis as KPI[],
             defects: newDefects
         };
@@ -306,23 +285,8 @@ export const useFactoryStore = create<FactoryState>((set) => ({
     // Conveyor State
     conveyorSpeed: 1,
     conveyorStatus: 'stopped',
-    activeParts: [],
     setConveyorSpeed: (speed: number) => set({ conveyorSpeed: speed }),
     setConveyorStatus: (status: 'running' | 'stopped' | 'jammed') => set({ conveyorStatus: status }),
-    
-    addPart: (part) => set((state) => ({ 
-        activeParts: [...state.activeParts, part] 
-    })),
-    
-    updatePart: (id, t, isDefected) => set((state) => ({
-        activeParts: state.activeParts.map(p => 
-            p.id === id ? { ...p, t, isDefected: isDefected ?? p.isDefected } : p
-        )
-    })),
-    
-    removePart: (id) => set((state) => ({
-        activeParts: state.activeParts.filter(p => p.id !== id)
-    })),
 
     // Telemetry
     telemetryInterval: null,
@@ -380,15 +344,13 @@ export const useFactoryStore = create<FactoryState>((set) => ({
         stations: INITIAL_STATIONS,
         kpis: INITIAL_KPIS,
         defects: INITIAL_DEFECTS,
-        activeParts: [],
-        tilePosition: 0,
-        partPositions: [],
         partPositionsRef: { current: [] },
+        partIdsRef: { current: [] },
         sClockCount: 0,
         pClockCount: 0,
         statusMatrix: Array(9).fill(null).map(() => Array(7).fill(null)),
         isDataFlowing: false,
-        conveyorSpeed: 1,
+        conveyorSpeed: DEFAULT_CONVEYOR_SPEED,
         conveyorStatus: 'stopped',
         resetVersion: state.resetVersion + 1,
         showPassport: false,

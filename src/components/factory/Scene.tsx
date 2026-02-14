@@ -1,4 +1,4 @@
-import { Suspense, useRef } from "react";
+import { Suspense, useRef, useEffect } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import {
   OrbitControls,
@@ -11,52 +11,37 @@ import * as THREE from "three";
 import { useFactoryStore } from "../../store/factoryStore";
 import { ConveyorBelt } from "./ConveyorBelt";
 import { ProductionTable3D } from "./ProductionTable3D";
+import { useSystemTimer } from "../../system-timer/useSystemTimer";
+import { STATION_STAGES, LIGHT_TOLERANCE } from "../../lib/constants";
 
-// Physical Highlighting Logic for Station
-const StationBody = ({ index, color }: { index: number; color: string }) => {
-  const meshRef = useRef<THREE.Mesh>(null);
-  const lightRef = useRef<THREE.Mesh>(null);
-  const partPositionsRef = useFactoryStore((state) => state.partPositionsRef);
+// React Station Component with ref-based updates
+const Station = ({
+  position,
+  label,
+  index,
+  stationRefs,
+}: {
+  position: [number, number, number];
+  label: string;
+  index: number;
+  stationRefs: React.MutableRefObject<(THREE.Group | null)[]>;
+}) => {
+  const groupRef = useRef<THREE.Group>(null);
 
-  // Mapping of station indices to their curve progress positions (t)
-  const stationStages = [0.0625, 0.125, 0.1875, 0.25, 0.3125, 0.375, 0.4375];
-
-  // Track state in a ref for frame-to-frame stability
-  const activeRef = useRef(false);
-
-  useFrame(() => {
-    if (!partPositionsRef.current || !meshRef.current || !lightRef.current)
-      return;
-
-    // Proximity check (Tight threshold for better visual sync)
-    const isPhysicalActive = partPositionsRef.current.some(
-      (t) => Math.abs(t - stationStages[index]) < 0.018,
-    );
-
-    // Only update if state changed to save performance
-    if (isPhysicalActive !== activeRef.current) {
-      activeRef.current = isPhysicalActive;
-
-      const mat = meshRef.current.material as THREE.MeshStandardMaterial;
-      const lightMat = lightRef.current.material as THREE.MeshBasicMaterial;
-
-      if (isPhysicalActive) {
-        mat.color.set(color);
-        mat.emissive.set(color);
-        mat.emissiveIntensity = 0.8;
-        lightMat.color.set("#00ff88");
-      } else {
-        mat.color.set("#0a0a0a");
-        mat.emissive.set("#000000");
-        mat.emissiveIntensity = 0;
-        lightMat.color.set("#330000");
-      }
-    }
-  });
+  useEffect(() => {
+    stationRefs.current[index] = groupRef.current;
+  }, [index, stationRefs]);
 
   return (
-    <>
-      <mesh ref={meshRef} position={[0, 1.5, 0]} castShadow receiveShadow>
+    <group position={position} ref={groupRef}>
+      {/* Base */}
+      <mesh position={[0, 0.5, 0]} castShadow receiveShadow>
+        <boxGeometry args={[2, 1, 2]} />
+        <meshStandardMaterial color="#333" roughness={0.5} metalness={0.8} />
+      </mesh>
+
+      {/* Reactive Body */}
+      <mesh position={[0, 1.5, 0]} name="body" castShadow receiveShadow>
         <boxGeometry args={[1.8, 1, 1.8]} />
         <meshStandardMaterial
           color="#0a0a0a"
@@ -69,38 +54,11 @@ const StationBody = ({ index, color }: { index: number; color: string }) => {
         />
       </mesh>
 
-      <mesh ref={lightRef} position={[0, 2.5, 0]}>
+      {/* Status Light */}
+      <mesh position={[0, 2.5, 0]} name="light">
         <sphereGeometry args={[0.2, 16, 16]} />
         <meshBasicMaterial color="#330000" />
       </mesh>
-    </>
-  );
-};
-
-// Simple Station Component
-const Station = ({
-  position,
-  color,
-  label,
-  index,
-  renderDefault = true,
-}: {
-  position: [number, number, number];
-  color: string;
-  label: string;
-  index: number;
-  renderDefault?: boolean;
-}) => {
-  return (
-    <group position={position}>
-      {/* Base */}
-      <mesh position={[0, 0.5, 0]} castShadow receiveShadow>
-        <boxGeometry args={[2, 1, 2]} />
-        <meshStandardMaterial color="#333" roughness={0.5} metalness={0.8} />
-      </mesh>
-
-      {/* Reactive Body & Status Light */}
-      {renderDefault && <StationBody index={index} color={color} />}
 
       {/* Station Label (3D Text) */}
       <Text
@@ -261,13 +219,83 @@ const ShipmentBox = ({ position }: { position: [number, number, number] }) => (
   </group>
 );
 
+const SceneLogic = ({
+  stationRefs,
+  activeStatesRef,
+  stationStages,
+}: {
+  stationRefs: React.MutableRefObject<(THREE.Group | null)[]>;
+  activeStatesRef: React.MutableRefObject<boolean[]>;
+  stationStages: number[];
+}) => {
+  const stations = useFactoryStore((state) => state.stations);
+  const partPositionsRef = useFactoryStore((state) => state.partPositionsRef);
+
+  useFrame(() => {
+    if (!partPositionsRef.current || !stationRefs.current) return;
+
+    // Single pass over stations
+    stationStages.forEach((stage, idx) => {
+      const group = stationRefs.current[idx];
+      if (!group || !stations[idx]) return;
+
+      const isPhysicalActive = partPositionsRef.current.some(
+        (t) => Math.abs(t - stage) < LIGHT_TOLERANCE,
+      );
+
+      if (isPhysicalActive !== activeStatesRef.current[idx]) {
+        activeStatesRef.current[idx] = isPhysicalActive;
+
+        const body = group.getObjectByName("body") as THREE.Mesh;
+        const light = group.getObjectByName("light") as THREE.Mesh;
+
+        if (body && light) {
+          const bodyMat = body.material as THREE.MeshStandardMaterial;
+          const lightMat = light.material as THREE.MeshBasicMaterial;
+          const color = stations[idx].color;
+
+          if (isPhysicalActive) {
+            bodyMat.color.set(color);
+            bodyMat.emissive.set(color);
+            bodyMat.emissiveIntensity = 0.8;
+            lightMat.color.set("#00ff88");
+          } else {
+            bodyMat.color.set("#0a0a0a");
+            bodyMat.emissive.set("#000000");
+            bodyMat.emissiveIntensity = 0;
+            lightMat.color.set("#330000");
+          }
+        }
+      }
+    });
+  });
+
+  return null;
+};
+
+// System Timer driver — must be inside Canvas tree
+const SystemTimerDriver = () => {
+  useSystemTimer();
+  return null;
+};
+
 export const Scene = () => {
   const stations = useFactoryStore((state) => state.stations);
   const resetVersion = useFactoryStore((state) => state.resetVersion);
 
+  // Central Station Ref Management
+  const stationRefs = useRef<(THREE.Group | null)[]>(new Array(7).fill(null));
+  const activeStatesRef = useRef<boolean[]>(new Array(7).fill(false));
+
   return (
     <Canvas shadows className="w-full h-full bg-black">
       <Suspense fallback={null}>
+        <SystemTimerDriver />
+        <SceneLogic
+          stationRefs={stationRefs}
+          activeStatesRef={activeStatesRef}
+          stationStages={STATION_STAGES}
+        />
         <PerspectiveCamera makeDefault position={[25, 17.3, 21]} fov={40} />
         <OrbitControls
           minPolarAngle={Math.PI / 6}
@@ -312,8 +340,8 @@ export const Scene = () => {
             <Station
               index={index}
               position={[(index - 3) * 4, 0, 0]}
-              color={station.color}
               label={station.name.en}
+              stationRefs={stationRefs}
             />
           </group>
         ))}

@@ -1,15 +1,11 @@
 import { Scene } from "./components/factory/Scene";
 import { Dashboard } from "./components/ui/Dashboard";
 import { SimulationControls } from "./components/ui/SimulationControls";
-import { useSensorSimulation } from "./hooks/useSensorSimulation";
 
 import { useEffect } from "react";
 import { useFactoryStore } from "./store/factoryStore";
 
 function App() {
-  // Start background simulation
-  useSensorSimulation();
-
   // Start telemetry sync
   useEffect(() => {
     const { startTelemetrySync, stopTelemetrySync } =

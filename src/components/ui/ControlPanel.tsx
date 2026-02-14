@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useFactoryStore } from "../../store/factoryStore";
 import { translations } from "../../lib/translations";
+import { computeBaseVelocity } from "../../system-timer/useSystemTimer";
 
 export const ControlPanel = () => {
   const {
@@ -16,10 +17,8 @@ export const ControlPanel = () => {
     toggleHeatmap,
     sClockPeriod,
     setSClockPeriod,
-    cFactor,
-    setCFactor,
-    pFactor,
-    setPFactor,
+    stationInterval,
+    setStationInterval,
     showProductionTable,
     setShowProductionTable,
   } = useFactoryStore();
@@ -102,11 +101,14 @@ export const ControlPanel = () => {
 
         <div className="h-px bg-white/10 my-1" />
 
-        {/* Conveyor Speed */}
-        <div className="space-y-1">
-          <div className="flex justify-between items-center text-[10px] text-white/80 font-bold">
-            <span>
-              {t("conveyorSpeed")}: {conveyorSpeed}x
+        {/* Conveyor Speed - Multiplier */}
+        <div className="space-y-1 bg-[#00ff88]/5 p-2 rounded-lg border border-[#00ff88]/20">
+          <div className="flex justify-between items-center text-[10px] font-bold">
+            <span className="text-[#00ff88]">
+              {t("conveyorSpeed")}: {conveyorSpeed.toFixed(1)}x
+            </span>
+            <span className="bg-[#00ff88] text-black px-1.5 py-0.5 rounded-[4px] text-[8px] tracking-tighter">
+              SYNCED
             </span>
           </div>
           <input
@@ -116,8 +118,19 @@ export const ControlPanel = () => {
             step="0.1"
             value={conveyorSpeed}
             onChange={(e) => setConveyorSpeed(parseFloat(e.target.value))}
-            className="w-full h-1.5 bg-white/20 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:bg-[#00ff88] [&::-webkit-slider-thumb]:rounded-full hover:[&::-webkit-slider-thumb]:scale-125 transition-all"
+            className="w-full h-1.5 bg-white/20 rounded-lg appearance-none cursor-pointer accent-[#00ff88] outline-none"
           />
+          <div className="text-[14px] font-bold text-white/90 py-1">
+            Eff:{" "}
+            {(
+              computeBaseVelocity(sClockPeriod, stationInterval) * conveyorSpeed
+            ).toFixed(4)}
+            x
+          </div>
+          <div className="text-[8px] text-white/40 italic leading-none">
+            Linked to s_clk ({sClockPeriod}ms) & station_interval (
+            {stationInterval})
+          </div>
         </div>
 
         <div className="h-px bg-white/10 my-1" />
@@ -165,7 +178,7 @@ export const ControlPanel = () => {
           <div className="space-y-1">
             <div className="flex justify-between items-center text-[10px] text-white/80 font-bold">
               <span>
-                {t("c_factor")}: {cFactor}
+                {t("stationInterval")}: {stationInterval}
               </span>
             </div>
             <input
@@ -173,25 +186,8 @@ export const ControlPanel = () => {
               min="1"
               max="20"
               step="1"
-              value={cFactor}
-              onChange={(e) => setCFactor(parseInt(e.target.value))}
-              className="w-full h-1.5 bg-white/20 rounded-lg appearance-none cursor-pointer accent-[#00ff88]"
-            />
-          </div>
-
-          <div className="space-y-1">
-            <div className="flex justify-between items-center text-[10px] text-white/80 font-bold">
-              <span>
-                {t("p_factor")}: {pFactor}
-              </span>
-            </div>
-            <input
-              type="range"
-              min="1"
-              max="20"
-              step="1"
-              value={pFactor}
-              onChange={(e) => setPFactor(parseInt(e.target.value))}
+              value={stationInterval}
+              onChange={(e) => setStationInterval(parseInt(e.target.value))}
               className="w-full h-1.5 bg-white/20 rounded-lg appearance-none cursor-pointer accent-[#00ff88]"
             />
           </div>
