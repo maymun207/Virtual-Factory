@@ -3,6 +3,7 @@
  * Eliminates the duplicate positioning/drag logic from TilePassport, DefectHeatmap, ControlPanel.
  */
 import { useState, useRef, useEffect, useCallback } from 'react';
+import { PANEL_DEFAULT_POSITION, PANEL_DEFAULT_WIDTH, PANEL_ANCHOR_OFFSET } from '../lib/params';
 
 interface DraggablePanelResult {
   position: { x: number; y: number };
@@ -11,8 +12,8 @@ interface DraggablePanelResult {
 }
 
 export function useDraggablePanel(anchorButtonId: string): DraggablePanelResult {
-  const [position, setPosition] = useState({ x: 0, y: 120 });
-  const [width, setWidth] = useState(320);
+  const [position, setPosition] = useState({ ...PANEL_DEFAULT_POSITION });
+  const [width, setWidth] = useState(PANEL_DEFAULT_WIDTH);
   const isDragging = useRef(false);
   const dragOffset = useRef({ x: 0, y: 0 });
 
@@ -24,7 +25,7 @@ export function useDraggablePanel(anchorButtonId: string): DraggablePanelResult 
         const rect = btn.getBoundingClientRect();
         setPosition({
           x: rect.left,
-          y: window.innerHeight - rect.top + 20,
+          y: window.innerHeight - rect.top + PANEL_ANCHOR_OFFSET,
         });
         setWidth(rect.width);
       }
@@ -74,3 +75,4 @@ export function useDraggablePanel(anchorButtonId: string): DraggablePanelResult 
 
   return { position, width, handleMouseDown };
 }
+

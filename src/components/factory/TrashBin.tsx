@@ -40,11 +40,11 @@ export const TrashBin = ({
           metalness={MATERIALS.trashBin.metalness}
           roughness={MATERIALS.trashBin.roughness}
         />
-        {/* Open top effect */}
-        <mesh position={[0, TRASH_BIN_INSIDE_Y, 0]}>
-          <boxGeometry args={TRASH_BIN_INSIDE_SIZE} />
-          <meshStandardMaterial color={COLORS.trashBinInside} />
-        </mesh>
+      </mesh>
+      {/* Open top effect — sibling mesh, not nested inside the body mesh */}
+      <mesh position={[0, TRASH_BIN_INSIDE_Y, 0]}>
+        <boxGeometry args={TRASH_BIN_INSIDE_SIZE} />
+        <meshStandardMaterial color={COLORS.trashBinInside} />
       </mesh>
 
       {/* Counter above bin */}

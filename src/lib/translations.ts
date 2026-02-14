@@ -1,7 +1,10 @@
 export const translations = {
     header: {
         title: { tr: '🏭 Seramik Üretim Hattı - Dijital İkiz', en: '🏭 Ceramic Production Line - Digital Twin' },
-        subtitle: { tr: 'IoT-Ignite + ArMES/MOM + ArAI Entegrasyonu', en: 'IoT-Ignite + ArMES/MOM + ArAI Integration' }
+        subtitle: { tr: 'IoT-Ignite + ArMES/MOM + ArAI Entegrasyonu', en: 'IoT-Ignite + ArMES/MOM + ArAI Integration' },
+        start: { tr: 'Başlat', en: 'Start' },
+        stop: { tr: 'Durdur', en: 'Stop' },
+        reset: { tr: 'Sıfırla', en: 'Reset' }
     },
     controlPanel: {
         title: { tr: '🎮 Kontrol & Aksiyonlar', en: '🎮 Control & Actions' },

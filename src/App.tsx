@@ -2,8 +2,12 @@ import { useEffect } from "react";
 import { Scene } from "./components/factory/Scene";
 import { Dashboard } from "./components/ui/Dashboard";
 import { useTelemetryStore } from "./store/telemetryStore";
+import { useKPISync } from "./hooks/useKPISync";
 
 function App() {
+  // Start KPI synchronization (reacts to simulation clock changes)
+  useKPISync();
+
   useEffect(() => {
     useTelemetryStore.getState().startTelemetrySync();
     return () => {

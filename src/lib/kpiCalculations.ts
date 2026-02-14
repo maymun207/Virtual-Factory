@@ -2,7 +2,7 @@
  * KPI Calculations — Pure functions for all KPI-related math.
  * Extracted from the monolithic advanceSClock() for testability and modularity.
  */
-import type { ConsumptionParams, KPI, Defect } from './params';
+import type { KPI, Defect, KpiId } from './params';
 import {
   ENERGY_CONFIG,
   CO2_FACTOR_ELECTRIC,
@@ -44,11 +44,11 @@ export const calculateEnergy = (
   };
 
   const totalKwh = Object.entries(ENERGY_CONFIG.kwh).reduce(
-    (acc, [id, params]) => acc + calculateConsumption(params as ConsumptionParams, conveyorSpeed, machineStates[id], isRunning),
+    (acc, [id, params]) => acc + calculateConsumption(params, conveyorSpeed, machineStates[id], isRunning),
     0
   );
   const totalGas = Object.entries(ENERGY_CONFIG.gas).reduce(
-    (acc, [id, params]) => acc + calculateConsumption(params as ConsumptionParams, conveyorSpeed, machineStates[id], isRunning),
+    (acc, [id, params]) => acc + calculateConsumption(params, conveyorSpeed, machineStates[id], isRunning),
     0
   );
   const totalCO2 = (totalKwh * CO2_FACTOR_ELECTRIC) + (totalGas * CO2_FACTOR_GAS);
@@ -87,7 +87,8 @@ export interface KPIUpdateInput {
 
 export const updateKPIs = (kpis: KPI[], input: KPIUpdateInput): KPI[] => {
   return kpis.map(kpi => {
-    switch (kpi.id) {
+    const id = kpi.id as KpiId;
+    switch (id) {
       case 'energy': return { ...kpi, value: input.energy.totalKwh.toFixed(1) };
       case 'gas':    return { ...kpi, value: input.energy.totalGas.toFixed(1) };
       case 'co2':    return { ...kpi, value: input.energy.totalCO2.toFixed(1) };
@@ -115,10 +116,13 @@ export const calculateTrends = (
   history: KPIHistoryRecord[],
   sClockCount: number,
 ): { kpis: KPI[]; history: KPIHistoryRecord[] } => {
-  const nextHistory = [
-    ...history,
-    { sClock: sClockCount, values: currentVals },
-  ].filter(h => sClockCount - h.sClock <= KPI_TREND_WINDOW);
+  // Build next history: push new record, then trim old entries
+  const nextHistory = history.slice(); // shallow copy
+  nextHistory.push({ sClock: sClockCount, values: currentVals });
+  // Remove entries outside the trend window from the front
+  while (nextHistory.length > 0 && sClockCount - nextHistory[0].sClock > KPI_TREND_WINDOW) {
+    nextHistory.shift();
+  }
 
   const oldRecord = nextHistory[0];
   if (!oldRecord || sClockCount - oldRecord.sClock < KPI_TREND_MIN_TICKS) {

@@ -1,4 +1,6 @@
 import { useUIStore } from "../../store/uiStore";
+// Playbook uses nested structures (arrays of objects with tr/en keys)
+// that the simple useTranslation hook cannot handle, so we access translations directly here.
 import { translations } from "../../lib/translations";
 
 export const Playbook = () => {

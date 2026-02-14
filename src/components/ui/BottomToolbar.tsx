@@ -1,13 +1,12 @@
 import { Settings } from "lucide-react";
 import { useUIStore } from "../../store/uiStore";
-import { translations } from "../../lib/translations";
+import { useTranslation } from "../../hooks/useTranslation";
 
 export const BottomToolbar = () => {
-  const currentLang = useUIStore((s) => s.currentLang);
   const toggleControlPanel = useUIStore((s) => s.toggleControlPanel);
   const showControlPanel = useUIStore((s) => s.showControlPanel);
 
-  const t = translations;
+  const t = useTranslation("controlPanel");
 
   return (
     <button
@@ -23,9 +22,7 @@ export const BottomToolbar = () => {
         size={18}
         className={`transition-transform duration-500 ${showControlPanel ? "rotate-90 text-[#00ff88]" : "text-[#00ff88]/70 group-hover:rotate-45"}`}
       />
-      <span className="font-bold text-sm tracking-wide">
-        {t.controlPanel.title[currentLang]}
-      </span>
+      <span className="font-bold text-sm tracking-wide">{t("title")}</span>
     </button>
   );
 };

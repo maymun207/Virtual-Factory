@@ -6,7 +6,11 @@ import { useSimulationStore } from "../../store/simulationStore";
 import { useUIStore } from "../../store/uiStore";
 import { useTranslation } from "../../hooks/useTranslation";
 import { useDraggablePanel } from "../../hooks/useDraggablePanel";
-import { STATION_COUNT } from "../../lib/params";
+import {
+  STATION_COUNT,
+  TILE_PASSPORT_DEFAULTS,
+  PANEL_MIN_WIDTHS,
+} from "../../lib/params";
 
 export const TilePassport = () => {
   const pClockCount = useSimulationStore((s) => s.pClockCount);
@@ -31,7 +35,7 @@ export const TilePassport = () => {
       style={{
         left: position.x,
         bottom: position.y,
-        width: Math.max(width, 280),
+        width: Math.max(width, PANEL_MIN_WIDTHS.tilePassport),
       }}
     >
       {/* Drag Handle */}
@@ -65,15 +69,15 @@ export const TilePassport = () => {
             </div>
             <div className="flex justify-between">
               <span className="text-emerald-300">{t("lot")}</span>
-              <span className="font-mono">LOT-2024-001</span>
+              <span className="font-mono">{TILE_PASSPORT_DEFAULTS.lot}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-emerald-300">{t("order")}</span>
-              <span className="font-mono">ORD-7845</span>
+              <span className="font-mono">{TILE_PASSPORT_DEFAULTS.order}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-emerald-300">{t("recipe")}</span>
-              <span className="font-mono">GLZ-STD-01</span>
+              <span className="font-mono">{TILE_PASSPORT_DEFAULTS.recipe}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-emerald-300">{t("location")}</span>
@@ -88,7 +92,9 @@ export const TilePassport = () => {
           <div className="border-t border-emerald-500/20 mt-3 pt-3 space-y-2 text-xs">
             <div className="flex justify-between">
               <span className="text-emerald-300">{t("qualityScore")}</span>
-              <span className="text-green-400">92.5%</span>
+              <span className="text-green-400">
+                {TILE_PASSPORT_DEFAULTS.qualityScore}%
+              </span>
             </div>
             <div className="flex justify-between">
               <span className="text-emerald-300">{t("tracking")}</span>

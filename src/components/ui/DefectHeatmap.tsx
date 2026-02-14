@@ -9,6 +9,7 @@ import { useDraggablePanel } from "../../hooks/useDraggablePanel";
 import {
   DEFECT_THRESHOLD_HIGH,
   DEFECT_THRESHOLD_MEDIUM,
+  PANEL_MIN_WIDTHS,
 } from "../../lib/params";
 
 export const DefectHeatmap = () => {
@@ -37,7 +38,7 @@ export const DefectHeatmap = () => {
       style={{
         left: position.x,
         bottom: position.y,
-        width: Math.max(width, 300),
+        width: Math.max(width, PANEL_MIN_WIDTHS.defectHeatmap),
       }}
     >
       {/* Drag Handle */}

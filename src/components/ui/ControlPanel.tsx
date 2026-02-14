@@ -11,6 +11,7 @@ import {
   CONVEYOR_SPEED_RANGE,
   S_CLOCK_RANGE,
   STATION_INTERVAL_RANGE,
+  CONTROL_PANEL_GAP,
 } from "../../lib/params";
 
 export const ControlPanel = () => {
@@ -40,8 +41,7 @@ export const ControlPanel = () => {
     const btn = document.getElementById("btn-control-actions");
     if (btn) {
       const rect = btn.getBoundingClientRect();
-      // right offset = distance from viewport right to button's left edge + small gap
-      setRightOffset(window.innerWidth - rect.left + 8);
+      setRightOffset(window.innerWidth - rect.left + CONTROL_PANEL_GAP);
     }
   }, [showControlPanel]);
 
@@ -62,6 +62,7 @@ export const ControlPanel = () => {
         </span>
         <div className="grid grid-cols-2 gap-1.5 text-[10px]">
           <button
+            id="btn-tile-passport"
             onClick={togglePassport}
             className={`py-2 px-2 rounded-lg border transition-all duration-200 leading-tight ${
               showPassport
@@ -69,7 +70,7 @@ export const ControlPanel = () => {
                 : "border-white/10 text-white/50 hover:border-emerald-500/40 hover:text-white/80"
             }`}
           >
-            📔 Tile Passport
+            {t("tilePassport")}
           </button>
           <button
             onClick={() => setShowProductionTable(!showProductionTable)}
@@ -82,6 +83,7 @@ export const ControlPanel = () => {
             {t("productionTable")}
           </button>
           <button
+            id="btn-defect-heatmap"
             onClick={toggleHeatmap}
             className={`py-2 px-2 rounded-lg border transition-all duration-200 leading-tight ${
               showHeatmap
@@ -92,6 +94,7 @@ export const ControlPanel = () => {
             {t("defectHeatmap")}
           </button>
           <button
+            id="btn-kpi-panel"
             onClick={toggleKPI}
             className={`py-2 px-2 rounded-lg border transition-all duration-200 leading-tight ${
               showKPI
@@ -211,19 +214,6 @@ export const ControlPanel = () => {
           />
         </div>
       </div>
-
-      <style>{`
-        @keyframes slideInRight {
-          from {
-            opacity: 0;
-            transform: translateX(30px);
-          }
-          to {
-            opacity: 1;
-            transform: translateX(0);
-          }
-        }
-      `}</style>
     </div>
   );
 };

@@ -332,21 +332,24 @@ export interface ConsumptionParams {
   idleFactor: number; // e.g., 0.15 for 15% consumption when idle
 }
 
-export const ENERGY_CONFIG = {
+export const ENERGY_CONFIG: {
+  kwh: Record<string, ConsumptionParams>;
+  gas: Record<string, ConsumptionParams>;
+} = {
   kwh: {
-    press:     { base: 10,  minEffect: -0.2, maxEffect: 0.3,  idleFactor: 0.15 } as ConsumptionParams,
-    drying:    { base: 20,  minEffect: 0,    maxEffect: 0,    idleFactor: 0.15 } as ConsumptionParams,
-    glaze:     { base: 8,   minEffect: -0.1, maxEffect: 0.15, idleFactor: 0.15 } as ConsumptionParams,
-    digital:   { base: 20,  minEffect: -0.3, maxEffect: 0.3,  idleFactor: 0.15 } as ConsumptionParams,
-    kiln:      { base: 100, minEffect: 0,    maxEffect: 0,    idleFactor: 0.8  } as ConsumptionParams,
-    sorting:   { base: 10,  minEffect: -0.5, maxEffect: 0.5,  idleFactor: 0.15 } as ConsumptionParams,
-    packaging: { base: 10,  minEffect: -0.5, maxEffect: 0.5,  idleFactor: 0.15 } as ConsumptionParams,
+    press:     { base: 10,  minEffect: -0.2, maxEffect: 0.3,  idleFactor: 0.15 },
+    drying:    { base: 20,  minEffect: 0,    maxEffect: 0,    idleFactor: 0.15 },
+    glaze:     { base: 8,   minEffect: -0.1, maxEffect: 0.15, idleFactor: 0.15 },
+    digital:   { base: 20,  minEffect: -0.3, maxEffect: 0.3,  idleFactor: 0.15 },
+    kiln:      { base: 100, minEffect: 0,    maxEffect: 0,    idleFactor: 0.8  },
+    sorting:   { base: 10,  minEffect: -0.5, maxEffect: 0.5,  idleFactor: 0.15 },
+    packaging: { base: 10,  minEffect: -0.5, maxEffect: 0.5,  idleFactor: 0.15 },
   },
   gas: {
-    drying: { base: 30,  minEffect: 0, maxEffect: 0, idleFactor: 0.15 } as ConsumptionParams,
-    kiln:   { base: 100, minEffect: 0, maxEffect: 0, idleFactor: 0.8  } as ConsumptionParams,
+    drying: { base: 30,  minEffect: 0, maxEffect: 0, idleFactor: 0.15 },
+    kiln:   { base: 100, minEffect: 0, maxEffect: 0, idleFactor: 0.8  },
   },
-} as const;
+};
 
 // ═══════════════════════════════════════════════════════════════════
 // TELEMETRY — Sync interval
@@ -569,3 +572,45 @@ export const computeBaseVelocity = (
 
 export const LABEL_WASTE_BIN = 'WASTE BIN';
 export const LABEL_SHIPMENT = 'SHIPMENT';
+
+// ═══════════════════════════════════════════════════════════════════
+// KPI IDs — Shared type for type-safe KPI matching
+// ═══════════════════════════════════════════════════════════════════
+
+export const KPI_IDS = ['oee', 'ftq', 'scrap', 'energy', 'gas', 'co2'] as const;
+export type KpiId = typeof KPI_IDS[number];
+
+// ═══════════════════════════════════════════════════════════════════
+// TILE PASSPORT — Default display values
+// ═══════════════════════════════════════════════════════════════════
+
+export const TILE_PASSPORT_DEFAULTS = {
+  lot: 'LOT-2024-001',
+  order: 'ORD-7845',
+  recipe: 'GLZ-STD-01',
+  qualityScore: '92.5',
+} as const;
+
+// ═══════════════════════════════════════════════════════════════════
+// PANEL UI — Min widths, positions, and offsets
+// ═══════════════════════════════════════════════════════════════════
+
+export const PANEL_MIN_WIDTHS = {
+  tilePassport: 280,
+  defectHeatmap: 300,
+  kpiContainer: 260,
+} as const;
+
+export const PANEL_DEFAULT_POSITION: { x: number; y: number } = { x: 0, y: 120 };
+export const PANEL_DEFAULT_WIDTH = 320;
+export const PANEL_ANCHOR_OFFSET = 20;
+export const CONTROL_PANEL_GAP = 8;
+
+// ═══════════════════════════════════════════════════════════════════
+// HEADER UI — Gradient and button config
+// ═══════════════════════════════════════════════════════════════════
+
+export const HEADER_GRADIENT = {
+  from: '#00ff88',
+  to: '#00d4ff',
+} as const;

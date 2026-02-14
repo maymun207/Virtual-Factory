@@ -1,5 +1,17 @@
 @import "tailwindcss";
 
+/* ── Control Panel slide-in animation ── */
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
 @theme {
   --animate-pulse-shadow: pulse-shadow 2s infinite;
 

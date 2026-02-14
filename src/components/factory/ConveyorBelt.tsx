@@ -149,14 +149,13 @@ function Part({
 function PartSpawner({
   curve,
   status,
+  visualVelocity,
 }: {
   curve: THREE.CatmullRomCurve3;
   status: string;
+  visualVelocity: number;
 }) {
   const pClockCount = useSimulationStore((s) => s.pClockCount);
-  const sClockPeriod = useSimulationStore((s) => s.sClockPeriod);
-  const stationInterval = useSimulationStore((s) => s.stationInterval);
-  const conveyorSpeed = useSimulationStore((s) => s.conveyorSpeed);
   const incrementWasteCount = useSimulationStore((s) => s.incrementWasteCount);
   const incrementShipmentCount = useSimulationStore(
     (s) => s.incrementShipmentCount,
@@ -164,12 +163,6 @@ function PartSpawner({
 
   const [partIds, setPartIds] = useState<number[]>([]);
   const partsRef = useRef<Map<number, PartData>>(new Map());
-
-  // Single source of truth for velocity
-  const visualVelocity = useMemo(
-    () => computeBaseVelocity(sClockPeriod, stationInterval) * conveyorSpeed,
-    [sClockPeriod, stationInterval, conveyorSpeed],
-  );
 
   // Interlocked Spawning Logic
   useEffect(() => {
@@ -303,7 +296,8 @@ export const ConveyorBelt = () => {
       const point = curve.getPointAt(t);
       const tangent = curve.getTangentAt(t);
       dummy.position.copy(point);
-      dummy.lookAt(point.clone().add(tangent));
+      _lookAtPos.copy(point).add(tangent);
+      dummy.lookAt(_lookAtPos);
       dummy.rotateY(Math.PI / 2);
       dummy.updateMatrix();
       meshRef.current.setMatrixAt(i, dummy.matrix);
@@ -331,7 +325,11 @@ export const ConveyorBelt = () => {
         />
       </instancedMesh>
 
-      <PartSpawner curve={curve} status={conveyorStatus} />
+      <PartSpawner
+        curve={curve}
+        status={conveyorStatus}
+        visualVelocity={visualVelocity}
+      />
     </group>
   );
 };

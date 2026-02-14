@@ -76,6 +76,13 @@ const TableRow = memo(
       </group>
     );
   },
+  // Custom comparator: compare row elements instead of array reference
+  (prev, next) =>
+    prev.rIdx === next.rIdx &&
+    prev.displayTick === next.displayTick &&
+    prev.clockX === next.clockX &&
+    prev.row.length === next.row.length &&
+    prev.row.every((cell, i) => cell === next.row[i]),
 );
 
 export const ProductionTable3D = () => {

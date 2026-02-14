@@ -6,6 +6,7 @@ import { useKPIStore } from "../../store/kpiStore";
 import { useUIStore } from "../../store/uiStore";
 import { useTranslation } from "../../hooks/useTranslation";
 import { useDraggablePanel } from "../../hooks/useDraggablePanel";
+import { PANEL_MIN_WIDTHS } from "../../lib/params";
 
 export const KPIContainer = () => {
   const kpis = useKPIStore((s) => s.kpis);
@@ -25,7 +26,7 @@ export const KPIContainer = () => {
       style={{
         left: position.x,
         bottom: position.y,
-        width: Math.max(width, 260),
+        width: Math.max(width, PANEL_MIN_WIDTHS.kpiContainer),
       }}
     >
       {/* Drag Handle */}
